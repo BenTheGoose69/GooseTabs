@@ -1,0 +1,50 @@
+name: goosetabs
+description: "GooseTabs: The Tab Writer - An application for writing guitar and bass tabs"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Local storage
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
+
+  # File picker for importing tabs
+  file_picker: ^8.0.0
+
+  # Share functionality for exporting
+  share_plus: ^7.2.1
+
+  # UUID for unique tab IDs
+  uuid: ^4.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # App icon generator
+  flutter_launcher_icons: ^0.13.1
+
+# App icon configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/GooseTabs.jpg"
+  adaptive_icon_background: "#3D3D3D"
+  adaptive_icon_foreground: "assets/icon/GooseTabs.jpg"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icon/

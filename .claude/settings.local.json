@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:tabby.pro)",
+      "Bash(cd:*)",
+      "Bash(cmd.exe /c \"flutter analyze --no-fatal-infos --no-fatal-warnings\")",
+      "Bash(flutter.bat analyze:*)"
+    ]
+  }
+}
