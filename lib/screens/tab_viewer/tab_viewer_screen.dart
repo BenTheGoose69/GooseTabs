@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../models/tab_model.dart';
-import '../services/storage_service.dart';
+import '../../models/tab_model.dart';
+import '../../services/storage_service.dart';
+import 'widgets/action_button.dart';
+import 'widgets/info_tag.dart';
+import 'widgets/date_info.dart';
 
 class TabViewerScreen extends StatelessWidget {
   final GuitarTab tab;
@@ -47,6 +50,26 @@ class TabViewerScreen extends StatelessWidget {
     }
   }
 
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  bool _hasUsedSymbols() {
+    final allContent = tab.sections
+        .expand((s) => s.bars)
+        .expand((b) => b.columns)
+        .expand((c) => c.notes)
+        .join();
+
+    for (final symbol in tab.legend.keys) {
+      if (allContent.contains(symbol)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,17 +87,17 @@ class TabViewerScreen extends StatelessWidget {
         ),
         title: Text(tab.songName),
         actions: [
-          _ActionButton(
+          ActionButton(
             icon: Icons.copy_outlined,
             tooltip: 'Copy to Clipboard',
             onTap: () => _copyToClipboard(context),
           ),
-          _ActionButton(
+          ActionButton(
             icon: Icons.download_outlined,
             tooltip: 'Download',
             onTap: () => _downloadTab(context),
           ),
-          _ActionButton(
+          ActionButton(
             icon: Icons.share_outlined,
             tooltip: 'Share',
             onTap: () => _exportTab(context),
@@ -90,10 +113,10 @@ class TabViewerScreen extends StatelessWidget {
             _buildHeader(context),
             const SizedBox(height: 20),
             _buildTabContent(context),
-            if (_hasUsedSymbols()) ...const [
-              SizedBox(height: 20),
+            if (_hasUsedSymbols()) ...[
+              const SizedBox(height: 20),
+              _buildLegend(context),
             ],
-            if (_hasUsedSymbols()) _buildLegend(context),
           ],
         ),
       ),
@@ -139,13 +162,13 @@ class TabViewerScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          _InfoTag(
+                          InfoTag(
                             icon: Icons.tune,
                             label: tab.tuning.split(' ').first,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
-                          _InfoTag(
+                          InfoTag(
                             icon: Icons.layers,
                             label: '${tab.sections.length} sections',
                             color: Theme.of(context).colorScheme.secondary,
@@ -169,7 +192,7 @@ class TabViewerScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  _DateInfo(
+                  DateInfo(
                     icon: Icons.add_circle_outline,
                     label: 'Created',
                     date: _formatDate(tab.createdAt),
@@ -180,7 +203,7 @@ class TabViewerScreen extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                   ),
-                  _DateInfo(
+                  DateInfo(
                     icon: Icons.edit_outlined,
                     label: 'Modified',
                     date: _formatDate(tab.modifiedAt),
@@ -197,10 +220,7 @@ class TabViewerScreen extends StatelessWidget {
   Widget _buildTabContent(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: tab.sections.asMap().entries.map((entry) {
-        final section = entry.value;
-        return _buildSection(context, section);
-      }).toList(),
+      children: tab.sections.map((section) => _buildSection(context, section)).toList(),
     );
   }
 
@@ -387,7 +407,6 @@ class TabViewerScreen extends StatelessWidget {
     for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
       final note = bar.getNote(colIdx, stringIndex);
 
-      // Calculate max width for this column across all strings
       int maxLen = 1;
       for (int s = 0; s < totalStrings; s++) {
         final n = bar.getNote(colIdx, s);
@@ -414,21 +433,6 @@ class TabViewerScreen extends StatelessWidget {
     }
 
     return widgets;
-  }
-
-  bool _hasUsedSymbols() {
-    final allContent = tab.sections
-        .expand((s) => s.bars)
-        .expand((b) => b.columns)
-        .expand((c) => c.notes)
-        .join();
-
-    for (final symbol in tab.legend.keys) {
-      if (allContent.contains(symbol)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   Widget _buildLegend(BuildContext context) {
@@ -477,186 +481,56 @@ class TabViewerScreen extends StatelessWidget {
             Wrap(
               spacing: 12,
               runSpacing: 12,
-              children: usedSymbols.map((e) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                                Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            e.key,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+              children: usedSymbols
+                  .map((e) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          e.value,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                    Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                e.key,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              e.value,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  )).toList(),
+                      ))
+                  .toList(),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Tooltip(
-        message: tooltip,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoTag extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _InfoTag({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateInfo extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String date;
-
-  const _DateInfo({
-    required this.icon,
-    required this.label,
-    required this.date,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                ),
-              ),
-              Text(
-                date,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

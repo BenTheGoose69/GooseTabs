@@ -4,7 +4,9 @@
       "WebFetch(domain:tabby.pro)",
       "Bash(cd:*)",
       "Bash(cmd.exe /c \"flutter analyze --no-fatal-infos --no-fatal-warnings\")",
-      "Bash(flutter.bat analyze:*)"
+      "Bash(flutter.bat analyze:*)",
+      "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter analyze --no-fatal-infos --no-fatal-warnings\")",
+      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer:*)"
     ]
   }
 }
