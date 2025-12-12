@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Color constants
-  static const primaryColor = Color(0xFFE57373);
-  static const secondaryColor = Color(0xFFFFAB91);
-  static const accentRed = Color(0xFFFF8A80);
+  // Color constants - Pastel Orange palette
+  static const primaryColor = Color(0xFFFFAB91);    // Soft peachy orange
+  static const secondaryColor = Color(0xFFFFCC80);  // Warm light orange
+  static const accentOrange = Color(0xFFFFB74D);    // Brighter orange accent
   static const backgroundColor = Color(0xFF121212);
   static const surfaceColor = Color(0xFF1E1E1E);
   static const cardColor = Color(0xFF262626);
@@ -18,15 +18,15 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: primaryColor,
         secondary: secondaryColor,
-        tertiary: accentRed,
+        tertiary: accentOrange,
         surface: surfaceColor,
         error: Color(0xFFCF6679),
         onPrimary: Colors.black,
         onSecondary: Colors.black,
         onSurface: Color(0xFFE0E0E0),
         onError: Colors.black,
-        primaryContainer: Color(0xFF5C3A3A),
-        secondaryContainer: Color(0xFF5C4A3A),
+        primaryContainer: Color(0xFF5C4A3A),
+        secondaryContainer: Color(0xFF4A3D2A),
         surfaceContainerHighest: cardColor,
         surfaceContainerHigh: Color(0xFF1A1A1A),
         outline: Color(0xFF404040),
@@ -137,8 +137,8 @@ class AppTheme {
         onSecondary: Colors.black,
         onSurface: Color(0xFF212121),
         onError: Colors.white,
-        primaryContainer: Color(0xFFFFCDD2),
-        secondaryContainer: Color(0xFFFFE0B2),
+        primaryContainer: Color(0xFFFFE0B2),
+        secondaryContainer: Color(0xFFFFECB3),
         surfaceContainerHighest: Color(0xFFFFFFFF),
         surfaceContainerHigh: Color(0xFFF5F5F5),
         outline: Color(0xFFBDBDBD),

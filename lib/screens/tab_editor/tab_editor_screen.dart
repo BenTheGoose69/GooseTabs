@@ -95,6 +95,20 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     }
   }
 
+  Future<void> _editTabName() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _TabNameDialogContent(currentName: _tab.songName),
+    );
+
+    if (result != null && result.isNotEmpty && result != _tab.songName && mounted) {
+      setState(() {
+        _tab.songName = result;
+        _hasChanges = true;
+      });
+    }
+  }
+
   // ============================================================
   // Note Operations
   // ============================================================
@@ -218,6 +232,17 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
       });
     } else {
       _addNote('$slideType$targetFret');
+    }
+  }
+
+  Future<void> _addHarmonic() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _HarmonicDialogContent(),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      _addNote('<$result>');
     }
   }
 
@@ -374,14 +399,16 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          _buildSectionSelector(),
-          _buildFretboard(),
-          _buildTechniqueButtons(),
-          _buildSectionOptions(),
-          Expanded(child: _buildTabDisplay()),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildSectionSelector(),
+            _buildFretboard(),
+            _buildTechniqueButtons(),
+            _buildSectionOptions(),
+            Expanded(child: _buildTabDisplay()),
+          ],
+        ),
       ),
     );
   }
@@ -399,21 +426,38 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _tab.songName,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          Text(
-            _tab.tuning,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+      title: GestureDetector(
+        onTap: _editTabName,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _tab.songName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    _tab.tuning,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ],
+        ),
       ),
       actions: [
         AppBarAction(
@@ -755,6 +799,15 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
                     onTap: () => _addSlide(t),
                   ),
                 )),
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: TechniqueButton(
+                label: '<>',
+                tooltip: 'Harmonic',
+                isWide: true,
+                onTap: _addHarmonic,
+              ),
+            ),
             _buildDivider(),
             TechniqueButton(label: '|', tooltip: 'Add bar', isWide: true, onTap: _addBarLine),
             const SizedBox(width: 6),
@@ -925,21 +978,23 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   }
 
   Widget _buildTabDisplay() {
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        children: [
-          _buildNavigationControls(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+    return ClipRect(
+      child: Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: Column(
+          children: [
+            _buildNavigationControls(),
+            Expanded(
               child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: _buildTabLines(),
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: _buildTabLines(),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1137,5 +1192,202 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     }
 
     return widgets;
+  }
+}
+
+class _HarmonicDialogContent extends StatefulWidget {
+  @override
+  State<_HarmonicDialogContent> createState() => _HarmonicDialogContentState();
+}
+
+class _HarmonicDialogContentState extends State<_HarmonicDialogContent> {
+  late final TextEditingController _controller;
+
+  // Common harmonic frets
+  final List<int> _commonHarmonics = [5, 7, 12, 19, 24];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit([String? preset]) {
+    final text = preset ?? _controller.text.trim();
+    Navigator.of(context).pop(text.isEmpty ? null : text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '<>',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Natural Harmonic',
+                  style: theme.textTheme.titleLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _commonHarmonics
+                  .map((fret) => FilledButton.tonal(
+                        onPressed: () => _submit(fret.toString()),
+                        child: Text('<$fret>'),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'Fret number (0-24)',
+                prefixIcon: Icon(Icons.music_note),
+              ),
+              autofocus: true,
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => _submit(),
+                  child: const Text('Add'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TabNameDialogContent extends StatefulWidget {
+  final String currentName;
+
+  const _TabNameDialogContent({required this.currentName});
+
+  @override
+  State<_TabNameDialogContent> createState() => _TabNameDialogContentState();
+}
+
+class _TabNameDialogContentState extends State<_TabNameDialogContent> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.currentName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text.trim();
+    Navigator.of(context).pop(text.isEmpty ? null : text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.music_note, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Tab Name',
+                  style: theme.textTheme.titleLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                hintText: 'Enter tab name...',
+                prefixIcon: Icon(Icons.edit_outlined),
+              ),
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _submit,
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -39,9 +39,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/GooseTabs.jpg"
-  adaptive_icon_background: "#3D3D3D"
-  adaptive_icon_foreground: "assets/icon/GooseTabs.jpg"
+  image_path: "assets/icon/GooseTabsFinal.png"
+  adaptive_icon_background: "#1A1A1A"
+  adaptive_icon_foreground: "assets/icon/GooseTabsFinal.png"
 
 flutter:
   uses-material-design: true

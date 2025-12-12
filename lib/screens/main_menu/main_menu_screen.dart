@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/tab_model.dart';
 import '../../services/storage_service.dart';
 import '../tab_editor/tab_editor_screen.dart';
 import '../tabs_list/tabs_list_screen.dart';
+import '../secret/blackjack_screen.dart';
 import 'widgets/menu_card.dart';
 import 'widgets/new_tab_sheet.dart';
 
@@ -15,11 +15,44 @@ class MainMenuScreen extends StatefulWidget {
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
   int _recentTabsCount = 0;
+  int _secretTapCount = 0;
+  DateTime? _lastTapTime;
 
   @override
   void initState() {
     super.initState();
     _loadRecentCount();
+  }
+
+  void _onSecretTap() {
+    final now = DateTime.now();
+    if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds > 2) {
+      _secretTapCount = 0;
+    }
+    _lastTapTime = now;
+    _secretTapCount++;
+
+    if (_secretTapCount >= 5) {
+      _secretTapCount = 0;
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const BlackjackScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+                ),
+                child: child,
+              ),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
   }
 
   Future<void> _loadRecentCount() async {
@@ -70,25 +103,42 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              _buildHeader(context),
-              const SizedBox(height: 48),
-              _buildStatsCard(context),
-              const SizedBox(height: 32),
-              _buildQuickActionsHeader(context),
-              const SizedBox(height: 16),
-              _buildMenuCards(context),
-              const Spacer(),
-              _buildFooter(context),
-            ],
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  _buildHeader(context),
+                  const SizedBox(height: 48),
+                  _buildStatsCard(context),
+                  const SizedBox(height: 32),
+                  _buildQuickActionsHeader(context),
+                  const SizedBox(height: 16),
+                  _buildMenuCards(context),
+                  const Spacer(),
+                  _buildFooter(context),
+                ],
+              ),
+            ),
           ),
-        ),
+          // Secret tap zone - bottom left corner
+          Positioned(
+            left: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: _onSecretTap,
+              behavior: HitTestBehavior.opaque,
+              child: const SizedBox(
+                width: 80,
+                height: 80,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

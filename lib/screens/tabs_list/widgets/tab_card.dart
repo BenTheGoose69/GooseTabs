@@ -37,6 +37,15 @@ class TabCard extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
+  String _getInstrument() {
+    final tuning = tab.tuning.toLowerCase();
+    if (tuning.contains('bass')) {
+      if (tuning.contains('5-string')) return '5-String Bass';
+      return 'Bass';
+    }
+    return 'Guitar';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -64,11 +73,23 @@ class TabCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Text(
-            tab.songName,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tab.songName,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _getInstrument(),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                    ),
+              ),
+            ],
           ),
         ),
         PopupMenuButton<String>(

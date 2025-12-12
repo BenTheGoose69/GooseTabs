@@ -16,7 +16,7 @@ C:\Users\Bendi\flutter\bin\flutter pub run flutter_launcher_icons  # Regenerate 
 
 ## Architecture
 
-**GooseTabs: The Tab Writer** - A Flutter mobile app for creating guitar/bass tablature. Uses Material 3 with dark theme (pastel red #E57373 accent on gray/black base).
+**GooseTabs: The Tab Writer** - A Flutter mobile app for creating guitar/bass tablature. Uses Material 3 with dark theme (pastel orange #FFAB91 accent on gray/black base).
 
 ### Data Model (`lib/models/tab_model.dart`)
 

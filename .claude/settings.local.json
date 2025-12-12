@@ -6,7 +6,27 @@
       "Bash(cmd.exe /c \"flutter analyze --no-fatal-infos --no-fatal-warnings\")",
       "Bash(flutter.bat analyze:*)",
       "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter analyze --no-fatal-infos --no-fatal-warnings\")",
-      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer:*)"
+      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer:*)",
+      "Bash(C:UsersBendiflutterbinflutter analyze --no-fatal-infos --no-fatal-warnings C:UsersBendiDesktopTab MakerThe_Tab_Writer)",
+      "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings\":*)",
+      "Bash(C:UsersBendiflutterbinflutter.bat analyze)",
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos 2>&1 | Select-String -Pattern ''error|warning'' | Select-Object -First 10\")",
+      "Bash(cmd.exe /c \"dir /b C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\assets\\icon\"\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\assets\\icon'' | Select-Object Name\")",
+      "Bash(powershell.exe -Command \"Remove-Item ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\assets\\icon\\GooseTabs.jpg''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat pub run flutter_launcher_icons\")",
+      "Bash(powershell.exe -Command \"Remove-Item ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\assets\\icon\\GooseTabsDark.png''\")",
+      "Bash(powershell.exe -Command \"Remove-Item ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\assets\\icon\\GooseTabsDark-modified.png''\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\mipmap-*'' -Recurse | Select-Object FullName, LastWriteTime | Format-Table -AutoSize\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat clean\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat pub get\")",
+      "Bash(powershell.exe -Command \"Remove-Item -Recurse -Force ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\mipmap-anydpi-v26''\")",
+      "Bash(powershell.exe -Command \"Remove-Item -Recurse -Force ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable*'' -ErrorAction SilentlyContinue\")",
+      "Bash(powershell.exe -Command \"New-Item -ItemType Directory -Force -Path ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable''\")",
+      "Bash(powershell.exe -Command \"New-Item -ItemType Directory -Force -Path ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable-night''\")",
+      "Bash(powershell.exe -Command \"New-Item -ItemType Directory -Force -Path ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable-night-v21''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze 2>&1 | Select-String -Pattern ''error'' | Select-Object -First 10\")"
     ]
   }
 }
