@@ -44,11 +44,14 @@ B|---------|
 G|---------|
 ```
 
-### Key Editor Features (`lib/screens/tab_editor_screen.dart`)
+### Key Editor Features (`lib/screens/tab_editor/`)
 
 - **Chord Mode**: Toggle on → select notes on different strings → toggle off to commit all as one column
-- **Slide Notation**: `/` and `\` buttons prompt for target fret, creates "6/7" format
-- **Techniques**: h, p, b, r, ~, x, t append to previous note
+- **Techniques that append** (h, p, b, t, ~, /, \): Append to previous note (e.g., `2h`, `4~`, `5/7`)
+- **Harmonic** (◆): Goes in own column, ONE digit appends (e.g., `◆9`)
+- **Digits after b/\//\\**: Target frets append to these techniques (e.g., `5b7`, `4/7`)
+
+Example line: `|-1--2h2b-4-4/3--4~-◆9`
 
 ### Storage (`lib/services/storage_service.dart`)
 
@@ -64,4 +67,29 @@ MainMenuScreen → TabEditorScreen (new/edit)
               → TabsListScreen → TabEditorScreen
                               → TabViewerScreen
               → Import → TabEditorScreen
+```
+
+## Code Style Guidelines
+
+### OOC (Object-Oriented Code) Pattern
+
+**Keep files small and focused.** This codebase follows OOC principles - avoid gigantic files.
+
+- **Maximum ~300-400 lines per file** - if a file exceeds this, split it into smaller components
+- **Extract reusable widgets** into separate files under `widgets/` subdirectory
+- **Extract dialogs** into separate files under `dialogs/` subdirectory
+- **One widget per file** - each StatefulWidget/StatelessWidget should be in its own file
+- **Group related files** in subdirectories (e.g., `lib/screens/tab_editor/widgets/`)
+
+Example structure:
+```
+lib/screens/tab_editor/
+├── tab_editor_screen.dart      # Main screen (orchestrates components)
+├── widgets/
+│   ├── fretboard.dart
+│   ├── technique_toolbar.dart
+│   └── section_selector.dart
+└── dialogs/
+    ├── tuning_dialog.dart
+    └── section_label_dialog.dart
 ```

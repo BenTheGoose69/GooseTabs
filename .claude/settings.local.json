@@ -26,7 +26,17 @@
       "Bash(powershell.exe -Command \"New-Item -ItemType Directory -Force -Path ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable''\")",
       "Bash(powershell.exe -Command \"New-Item -ItemType Directory -Force -Path ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable-night''\")",
       "Bash(powershell.exe -Command \"New-Item -ItemType Directory -Force -Path ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\android\\app\\src\\main\\res\\drawable-night-v21''\")",
-      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze 2>&1 | Select-String -Pattern ''error'' | Select-Object -First 10\")"
+      "Bash(powershell.exe -Command \"cd ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''; C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze 2>&1 | Select-String -Pattern ''error'' | Select-Object -First 10\")",
+      "Bash(C:UsersBendiflutterbinflutter analyze C:UsersBendiDesktopTab MakerThe_Tab_Writerlibmodelstab_model.dart)",
+      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter analyze C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\models\\tab_model.dart\")",
+      "Bash(C:UsersBendiflutterbinflutter.bat analyze libmodelstab_model.dart)",
+      "Bash(powershell -Command:*)",
+      "Bash(C:UsersBendiflutterbinflutter analyze)",
+      "WebSearch",
+      "Bash(C:UsersBendiflutterbinflutter pub run flutter_launcher_icons)",
+      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat pub run flutter_launcher_icons\")",
+      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" pub run flutter_launcher_icons)",
+      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" clean)"
     ]
   }
 }

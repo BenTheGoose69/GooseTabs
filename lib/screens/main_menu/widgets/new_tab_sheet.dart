@@ -64,9 +64,8 @@ class _NewTabSheetState extends State<NewTabSheet> {
     );
 
     final section = TabSection(stringNames: stringNames);
-    for (int i = 0; i < 16; i++) {
-      section.bars[0].addColumn();
-    }
+    // Start with 1 empty column
+    section.bars[0].addColumn();
     tab.sections.add(section);
 
     Navigator.pop(context);

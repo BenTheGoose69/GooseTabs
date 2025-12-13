@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../models/tab_model.dart';
 import '../../services/storage_service.dart';
-import '../../widgets/common/app_bar_action.dart';
 import '../tab_viewer/tab_viewer_screen.dart';
-import 'widgets/technique_button.dart';
-import 'widgets/nav_button.dart';
-import 'dialogs/slide_dialog.dart';
+import 'widgets/editor_app_bar.dart';
+import 'widgets/section_selector.dart';
+import 'widgets/fretboard.dart';
+import 'widgets/technique_toolbar.dart';
+import 'widgets/section_options.dart';
+import 'widgets/tab_display.dart';
 import 'dialogs/tuning_dialog.dart';
 import 'dialogs/section_label_dialog.dart';
 import 'dialogs/repeat_count_dialog.dart';
 import 'dialogs/section_menu_dialog.dart';
+import 'dialogs/tab_name_dialog.dart';
 
 class TabEditorScreen extends StatefulWidget {
   final GuitarTab tab;
@@ -28,9 +31,7 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   int _cursorPosition = 0;
   bool _chordMode = false;
   Map<int, String> _chordNotes = {};
-
-  final List<String> _techniques = ['h', 'p', 'b', 'r', '~', 'x', 't', '(', ')'];
-  final List<String> _slideTechniques = ['/', '\\'];
+  final ScrollController _tabScrollController = ScrollController();
 
   @override
   void initState() {
@@ -41,12 +42,67 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _tabScrollController.dispose();
+    super.dispose();
+  }
+
   TabSection get _currentSection => _tab.sections[_selectedSectionIndex];
 
-  void _markChanged() {
-    if (!_hasChanges) {
-      setState(() => _hasChanges = true);
+  int _getTotalColumns() {
+    return _currentSection.bars.fold(0, (sum, bar) => sum + bar.columns.length);
+  }
+
+  // ============================================================
+  // Scroll Management
+  // ============================================================
+
+  void _scrollToCursor() {
+    if (!_tabScrollController.hasClients) return;
+
+    final section = _currentSection;
+    double cursorX = 24 + 8;
+    int globalPos = 0;
+
+    for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
+      final bar = section.bars[barIdx];
+      for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
+        int maxLen = 1;
+        for (int s = 0; s < section.stringCount; s++) {
+          final n = bar.getNote(colIdx, s);
+          if (n.length > maxLen) maxLen = n.length;
+        }
+        final colWidth = maxLen * 10.0 + 6;
+
+        if (globalPos == _cursorPosition) {
+          final viewportWidth = _tabScrollController.position.viewportDimension;
+          final currentScroll = _tabScrollController.offset;
+
+          if (cursorX < currentScroll + 50) {
+            _tabScrollController.animateTo(
+              (cursorX - 50).clamp(0, _tabScrollController.position.maxScrollExtent),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          } else if (cursorX > currentScroll + viewportWidth - 100) {
+            _tabScrollController.animateTo(
+              (cursorX - viewportWidth + 100).clamp(0, _tabScrollController.position.maxScrollExtent),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+          return;
+        }
+        cursorX += colWidth;
+        globalPos++;
+      }
+      cursorX += 8;
     }
+  }
+
+  void _scheduleScrollToCursor() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToCursor());
   }
 
   // ============================================================
@@ -96,9 +152,9 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   }
 
   Future<void> _editTabName() async {
-    final result = await showDialog<String>(
+    final result = await TabNameDialog.show(
       context: context,
-      builder: (ctx) => _TabNameDialogContent(currentName: _tab.songName),
+      currentName: _tab.songName,
     );
 
     if (result != null && result.isNotEmpty && result != _tab.songName && mounted) {
@@ -122,25 +178,75 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     }
 
     setState(() {
+      // Check if we should append digit to previous incomplete note (◆, b, /, \)
+      if (_cursorPosition > 0 && RegExp(r'^\d+$').hasMatch(note)) {
+        int prevPos = _cursorPosition - 1;
+        for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
+          final bar = _currentSection.bars[barIdx];
+          if (prevPos < bar.columns.length) {
+            final prevNote = bar.getNote(prevPos, _selectedStringIndex);
+            // ◆ only allows ONE digit, so check it's exactly '◆'
+            // b, /, \ can have target frets appended
+            if (prevNote == '◆' || RegExp(r'[/\\b]$').hasMatch(prevNote)) {
+              bar.setNote(prevPos, _selectedStringIndex, prevNote + note);
+              _hasChanges = true;
+              return;
+            }
+            break;
+          }
+          prevPos -= bar.columns.length;
+        }
+      }
+
+      // INSERT a new column at current position and set the note
       int pos = _cursorPosition;
       for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
         final bar = _currentSection.bars[barIdx];
-        if (pos < bar.columns.length) {
-          bar.setNote(pos, _selectedStringIndex, note);
-          _cursorPosition++;
-          if (_cursorPosition >= _getTotalColumns()) {
-            _currentSection.bars.last.addColumn();
+        if (pos <= bar.columns.length) {
+          // Insert new column at this position
+          final newCol = TabColumn(bar.stringCount);
+          newCol.notes[_selectedStringIndex] = note;
+          if (pos < bar.columns.length) {
+            bar.columns.insert(pos, newCol);
+          } else {
+            bar.columns.add(newCol);
           }
+          _cursorPosition++;
           _hasChanges = true;
           return;
         }
         pos -= bar.columns.length;
       }
+      // At the end - add to last bar
       final lastBar = _currentSection.bars.last;
-      lastBar.addColumn();
-      lastBar.setNote(lastBar.columns.length - 1, _selectedStringIndex, note);
+      final newCol = TabColumn(lastBar.stringCount);
+      newCol.notes[_selectedStringIndex] = note;
+      lastBar.columns.add(newCol);
       _cursorPosition = _getTotalColumns();
       _hasChanges = true;
+    });
+    _scheduleScrollToCursor();
+  }
+
+  // Append technique symbol to the previous note (for h, p, b, t, ~, /, \)
+  void _appendTechnique(String technique) {
+    if (_cursorPosition == 0) return; // Nothing to append to
+
+    setState(() {
+      int prevPos = _cursorPosition - 1;
+      for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
+        final bar = _currentSection.bars[barIdx];
+        if (prevPos < bar.columns.length) {
+          final prevNote = bar.getNote(prevPos, _selectedStringIndex);
+          // Only append if previous note has a fret number
+          if (prevNote != '-' && RegExp(r'\d').hasMatch(prevNote)) {
+            bar.setNote(prevPos, _selectedStringIndex, prevNote + technique);
+            _hasChanges = true;
+          }
+          return;
+        }
+        prevPos -= bar.columns.length;
+      }
     });
   }
 
@@ -148,6 +254,7 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     if (_chordNotes.isEmpty) return;
 
     setState(() {
+      // Add chord at current position (no automatic dash before)
       int pos = _cursorPosition;
       for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
         final bar = _currentSection.bars[barIdx];
@@ -176,82 +283,27 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     });
   }
 
-  void _addTechnique(String technique) {
+  void _addBarLine() {
     setState(() {
-      int pos = _cursorPosition > 0 ? _cursorPosition - 1 : 0;
+      int pos = _cursorPosition;
       for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
         final bar = _currentSection.bars[barIdx];
         if (pos < bar.columns.length) {
-          final currentNote = bar.getNote(pos, _selectedStringIndex);
-          if (currentNote != '-') {
-            bar.setNote(pos, _selectedStringIndex, currentNote + technique);
-          } else {
-            bar.setNote(pos, _selectedStringIndex, technique);
+          final newBar = TabMeasure(stringCount: _currentSection.stringCount);
+          while (pos < bar.columns.length) {
+            newBar.columns.add(bar.columns.removeAt(pos));
           }
+          if (bar.columns.isEmpty) bar.addColumn();
+          if (newBar.columns.isEmpty) newBar.addColumn();
+          _currentSection.bars.insert(barIdx + 1, newBar);
           _hasChanges = true;
           return;
         }
         pos -= bar.columns.length;
       }
-    });
-  }
-
-  Future<void> _addSlide(String slideType) async {
-    int pos = _cursorPosition > 0 ? _cursorPosition - 1 : 0;
-    String previousNote = '-';
-
-    for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
-      final bar = _currentSection.bars[barIdx];
-      if (pos < bar.columns.length) {
-        previousNote = bar.getNote(pos, _selectedStringIndex);
-        break;
-      }
-      pos -= bar.columns.length;
-    }
-
-    final targetFret = await SlideDialog.show(
-      context: context,
-      slideType: slideType,
-      previousNote: previousNote,
-    );
-
-    if (targetFret == null || targetFret.isEmpty) return;
-
-    if (previousNote != '-') {
-      setState(() {
-        int pos = _cursorPosition > 0 ? _cursorPosition - 1 : 0;
-        for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
-          final bar = _currentSection.bars[barIdx];
-          if (pos < bar.columns.length) {
-            bar.setNote(pos, _selectedStringIndex, '$previousNote$slideType$targetFret');
-            _hasChanges = true;
-            return;
-          }
-          pos -= bar.columns.length;
-        }
-      });
-    } else {
-      _addNote('$slideType$targetFret');
-    }
-  }
-
-  Future<void> _addHarmonic() async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => _HarmonicDialogContent(),
-    );
-
-    if (result != null && result.isNotEmpty) {
-      _addNote('<$result>');
-    }
-  }
-
-  void _addBarLine() {
-    setState(() {
       final newBar = TabMeasure(stringCount: _currentSection.stringCount);
       newBar.addColumn();
       _currentSection.bars.add(newBar);
-      _cursorPosition = _getTotalColumns() - 1;
       _hasChanges = true;
     });
   }
@@ -261,29 +313,45 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
       setState(() {
         _cursorPosition--;
         int pos = _cursorPosition;
+        int columnsBeforeBar = 0;
         for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
           final bar = _currentSection.bars[barIdx];
           if (pos < bar.columns.length) {
-            for (int s = 0; s < _currentSection.stringCount; s++) {
-              bar.setNote(pos, s, '-');
+            bar.removeColumn(pos);
+            if (bar.columns.isEmpty) {
+              if (_currentSection.bars.length > 1) {
+                _currentSection.bars.removeAt(barIdx);
+                if (_cursorPosition > columnsBeforeBar && barIdx > 0) {
+                  _cursorPosition = columnsBeforeBar;
+                }
+              } else {
+                bar.addColumn();
+              }
             }
             _hasChanges = true;
             return;
           }
+          columnsBeforeBar += bar.columns.length;
           pos -= bar.columns.length;
         }
       });
+    } else if (_cursorPosition == 0 && _currentSection.bars.length > 1) {
+      setState(() {
+        if (_currentSection.bars[0].columns.length == 1 &&
+            _currentSection.bars[0].columns[0].isEmpty) {
+          _currentSection.bars.removeAt(0);
+          _hasChanges = true;
+        }
+      });
     }
+    _scheduleScrollToCursor();
   }
 
   void _moveCursor(int delta) {
     setState(() {
       _cursorPosition = (_cursorPosition + delta).clamp(0, _getTotalColumns());
     });
-  }
-
-  int _getTotalColumns() {
-    return _currentSection.bars.fold(0, (sum, bar) => sum + bar.columns.length);
+    _scheduleScrollToCursor();
   }
 
   // ============================================================
@@ -292,13 +360,9 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
 
   void _addSection() {
     setState(() {
-      // Copy string names from current section to preserve custom tunings
       final currentStringNames = List<String>.from(_currentSection.stringNames);
       final newSection = TabSection(stringNames: currentStringNames);
-      // Start with 16 columns
-      for (int i = 0; i < 16; i++) {
-        newSection.bars[0].addColumn();
-      }
+      newSection.bars[0].addColumn();
       _tab.sections.add(newSection);
       _selectedSectionIndex = _tab.sections.length - 1;
       _cursorPosition = 0;
@@ -347,7 +411,6 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   }
 
   Future<void> _editStringTuning(int stringIndex) async {
-    // Store current values before showing dialog
     final currentTuning = _currentSection.stringNames[stringIndex];
     final stringCount = _currentSection.stringCount;
 
@@ -358,7 +421,6 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
       stringCount: stringCount,
     );
 
-    // Only update if we got a valid new tuning and widget is still mounted
     if (newTuning != null && newTuning.isNotEmpty && mounted) {
       setState(() {
         _currentSection.stringNames[stringIndex] = newTuning;
@@ -391,999 +453,90 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   }
 
   // ============================================================
-  // Build Methods
+  // Build
   // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: _buildAppBar(),
+      appBar: EditorAppBar(
+        songName: _tab.songName,
+        tuning: _tab.tuning,
+        hasChanges: _hasChanges,
+        onBack: () => Navigator.pop(context),
+        onNameTap: _editTabName,
+        onPreview: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TabViewerScreen(tab: _tab)),
+        ),
+        onDownload: _downloadTab,
+        onShare: _exportTab,
+        onSave: _saveTab,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildSectionSelector(),
-            _buildFretboard(),
-            _buildTechniqueButtons(),
-            _buildSectionOptions(),
-            Expanded(child: _buildTabDisplay()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(Icons.arrow_back, size: 20),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: GestureDetector(
-        onTap: _editTabName,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tab.songName,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _tab.tuning,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
+            SectionSelector(
+              sections: _tab.sections,
+              selectedIndex: _selectedSectionIndex,
+              onSectionSelected: (index) => setState(() {
+                _selectedSectionIndex = index;
+                _cursorPosition = 0;
+              }),
+              onAddSection: _addSection,
+              onSectionLongPress: _showSectionMenu,
             ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.edit_outlined,
-              size: 16,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        AppBarAction(
-          icon: Icons.visibility_outlined,
-          tooltip: 'Preview',
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => TabViewerScreen(tab: _tab)),
-          ),
-        ),
-        AppBarAction(
-          icon: Icons.download_outlined,
-          tooltip: 'Download',
-          onPressed: _downloadTab,
-        ),
-        AppBarAction(
-          icon: Icons.share_outlined,
-          tooltip: 'Share',
-          onPressed: _exportTab,
-        ),
-        AppBarAction(
-          icon: _hasChanges ? Icons.save : Icons.save_outlined,
-          tooltip: 'Save',
-          highlighted: _hasChanges,
-          onPressed: _saveTab,
-        ),
-        const SizedBox(width: 8),
-      ],
-    );
-  }
-
-  Widget _buildSectionSelector() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: _tab.sections.length + 1,
-              itemBuilder: (context, index) {
-                if (index == _tab.sections.length) {
-                  return _buildAddSectionButton();
-                }
-                return _buildSectionChip(index);
+            Fretboard(
+              stringNames: _currentSection.stringNames,
+              selectedStringIndex: _selectedStringIndex,
+              chordNotes: _chordNotes,
+              onStringSelected: (index) => setState(() => _selectedStringIndex = index),
+              onTuningTap: _editStringTuning,
+              onFretTap: (stringIndex, fret) {
+                setState(() => _selectedStringIndex = stringIndex);
+                _addNote(fret.toString());
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddSectionButton() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _addSection,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                width: 2,
-                strokeAlign: BorderSide.strokeAlignInside,
-              ),
-              borderRadius: BorderRadius.circular(12),
+            TechniqueToolbar(
+              chordMode: _chordMode,
+              chordNotesCount: _chordNotes.length,
+              onChordModeToggle: () {
+                if (_chordMode && _chordNotes.isNotEmpty) {
+                  _commitChord();
+                }
+                setState(() {
+                  _chordMode = !_chordMode;
+                  if (!_chordMode) _chordNotes.clear();
+                });
+              },
+              onTechniqueTap: _appendTechnique,  // h, p, b, t, ~ append to previous note
+              onSlideTap: _appendTechnique,      // /, \ append to previous note
+              onHarmonicTap: () => _addNote('◆'), // ◆ goes in own column
+              onBarLineTap: _addBarLine,
+              onDashTap: () => _addNote('-'),
             ),
-            child: Icon(
-              Icons.add,
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
+            SectionOptions(
+              sectionLabel: _currentSection.label,
+              repeatCount: _currentSection.repeatCount,
+              onLabelTap: _editSectionLabel,
+              onRepeatTap: _setRepeatCount,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionChip(int index) {
-    final section = _tab.sections[index];
-    final isSelected = index == _selectedSectionIndex;
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => setState(() {
-            _selectedSectionIndex = index;
-            _cursorPosition = 0;
-          }),
-          onLongPress: () => _showSectionMenu(index),
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isSelected ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: isSelected
-                  ? null
-                  : Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                    ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              section.label ?? 'Section ${index + 1}',
-              style: TextStyle(
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFretboard() {
-    final stringNames = _currentSection.stringNames;
-    const int maxFret = 24;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surfaceContainerHighest,
-            Theme.of(context).colorScheme.surfaceContainerHigh,
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          children: [
-            _buildTuningSettingsButton(stringNames),
-            _buildStringLabels(stringNames),
-            Expanded(child: _buildFretGrid(stringNames, maxFret)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTuningSettingsButton(List<String> stringNames) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(stringNames.length, (stringIndex) {
-          return GestureDetector(
-            onTap: () => _editStringTuning(stringIndex),
-            child: Container(
-              width: 28,
-              height: 36,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.settings,
-                size: 16,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _buildStringLabels(List<String> stringNames) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(stringNames.length, (stringIndex) {
-          final isSelected = stringIndex == _selectedStringIndex;
-          final hasChordNote = _chordNotes.containsKey(stringIndex);
-          final chordNote = _chordNotes[stringIndex];
-
-          return GestureDetector(
-            onTap: () => setState(() => _selectedStringIndex = stringIndex),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: hasChordNote ? 44 : 32,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: isSelected || hasChordNote
-                    ? LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                        ],
-                      )
-                    : null,
-                borderRadius: BorderRadius.circular(8),
-                border: hasChordNote
-                    ? Border.all(color: Theme.of(context).colorScheme.secondary, width: 2)
-                    : null,
-              ),
-              child: Text(
-                hasChordNote ? '${stringNames[stringIndex]}:$chordNote' : stringNames[stringIndex],
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: hasChordNote ? 11 : 14,
-                  color: isSelected || hasChordNote
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _buildFretGrid(List<String> stringNames, int maxFret) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(maxFret + 1, (fret) {
-          final isMarkerFret = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24].contains(fret);
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(stringNames.length, (stringIndex) {
-              return _buildFretCell(stringIndex, fret, isMarkerFret);
-            }),
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _buildFretCell(int stringIndex, int fret, bool isMarkerFret) {
-    final isSelectedRow = stringIndex == _selectedStringIndex;
-    final hasChordNote = _chordNotes.containsKey(stringIndex);
-
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedStringIndex = stringIndex);
-        _addNote(fret.toString());
-      },
-      child: Container(
-        width: 36,
-        height: 36,
-        margin: const EdgeInsets.all(0.5),
-        decoration: BoxDecoration(
-          color: hasChordNote
-              ? Theme.of(context).colorScheme.secondary.withOpacity(0.2)
-              : isSelectedRow
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
-                  : isMarkerFret
-                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.08)
-                      : Theme.of(context).colorScheme.surface.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: hasChordNote
-                ? Theme.of(context).colorScheme.secondary
-                : Theme.of(context).colorScheme.outline.withOpacity(0.2),
-            width: hasChordNote ? 1.5 : 0.5,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          fret.toString(),
-          style: TextStyle(
-            fontSize: fret >= 10 ? 11 : 12,
-            fontWeight: isMarkerFret ? FontWeight.w600 : FontWeight.normal,
-            color: hasChordNote
-                ? Theme.of(context).colorScheme.secondary
-                : isSelectedRow
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTechniqueButtons() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-          ),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildChordModeButton(),
-            _buildDivider(),
-            ..._techniques.map((t) => Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: TechniqueButton(label: t, onTap: () => _addTechnique(t)),
-                )),
-            ..._slideTechniques.map((t) => Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: TechniqueButton(
-                    label: t,
-                    tooltip: t == '/' ? 'Slide up' : 'Slide down',
-                    onTap: () => _addSlide(t),
-                  ),
-                )),
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: TechniqueButton(
-                label: '<>',
-                tooltip: 'Harmonic',
-                isWide: true,
-                onTap: _addHarmonic,
-              ),
-            ),
-            _buildDivider(),
-            TechniqueButton(label: '|', tooltip: 'Add bar', isWide: true, onTap: _addBarLine),
-            const SizedBox(width: 6),
-            TechniqueButton(label: '-', tooltip: 'Empty', onTap: () => _addNote('-')),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChordModeButton() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (_chordMode && _chordNotes.isNotEmpty) {
-              _commitChord();
-            }
-            setState(() {
-              _chordMode = !_chordMode;
-              if (!_chordMode) {
-                _chordNotes.clear();
-              }
-            });
-          },
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: _chordMode
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: _chordMode
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.layers,
-                  size: 16,
-                  color: _chordMode
-                      ? Colors.black
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _chordMode && _chordNotes.isNotEmpty
-                      ? 'Add (${_chordNotes.length})'
-                      : 'Chord',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _chordMode
-                        ? Colors.black
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-    );
-  }
-
-  Widget _buildSectionOptions() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: _editSectionLabel,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.label_outline, size: 18, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _currentSection.label ?? 'Add section label...',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: _currentSection.label == null
-                              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _setRepeatCount,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: _currentSection.repeatCount > 1
-                    ? Theme.of(context).colorScheme.secondary.withOpacity(0.15)
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _currentSection.repeatCount > 1
-                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.5)
-                      : Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.repeat,
-                    size: 18,
-                    color: _currentSection.repeatCount > 1
-                        ? Theme.of(context).colorScheme.secondary
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'x${_currentSection.repeatCount}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: _currentSection.repeatCount > 1
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabDisplay() {
-    return ClipRect(
-      child: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(
-          children: [
-            _buildNavigationControls(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: _buildTabLines(),
-                ),
+              child: TabDisplay(
+                section: _currentSection,
+                cursorPosition: _cursorPosition,
+                selectedStringIndex: _selectedStringIndex,
+                totalColumns: _getTotalColumns(),
+                scrollController: _tabScrollController,
+                onMoveLeft: () => _moveCursor(-1),
+                onMoveRight: () => _moveCursor(1),
+                onBackspace: _backspace,
+                onCellTap: (position, stringIndex) => setState(() {
+                  _cursorPosition = position;
+                  _selectedStringIndex = stringIndex;
+                }),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavigationControls() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          NavButton(icon: Icons.keyboard_arrow_left, onTap: () => _moveCursor(-1)),
-          const SizedBox(width: 8),
-          NavButton(icon: Icons.keyboard_arrow_right, onTap: () => _moveCursor(1)),
-          const SizedBox(width: 8),
-          NavButton(icon: Icons.backspace_outlined, onTap: _backspace, isDestructive: true),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              'Col ${_cursorPosition + 1} / ${_getTotalColumns()}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabLines() {
-    final section = _currentSection;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(section.stringCount, (stringIndex) {
-            return _buildStringLine(section, stringIndex);
-          }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStringLine(TabSection section, int stringIndex) {
-    final stringName = section.stringNames[stringIndex];
-    final isSelectedString = stringIndex == _selectedStringIndex;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelectedString ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () => setState(() => _selectedStringIndex = stringIndex),
-            child: Container(
-              width: 24,
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Text(
-                stringName,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isSelectedString
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-            ),
-          ),
-          Text(
-            '|',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-          ..._buildNoteWidgets(section, stringIndex),
-          Text(
-            '|',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-          if (stringIndex == section.stringCount - 1 && section.repeatCount > 1)
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.secondary,
-                    Theme.of(context).colorScheme.secondary.withOpacity(0.8),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                'x${section.repeatCount}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildNoteWidgets(TabSection section, int stringIndex) {
-    List<Widget> widgets = [];
-    int globalPos = 0;
-
-    for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
-      final bar = section.bars[barIdx];
-
-      for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
-        final note = bar.getNote(colIdx, stringIndex);
-        final isCursor = globalPos == _cursorPosition && stringIndex == _selectedStringIndex;
-        final currentPos = globalPos;
-
-        int maxLen = 1;
-        for (int s = 0; s < section.stringCount; s++) {
-          final n = bar.getNote(colIdx, s);
-          if (n.length > maxLen) maxLen = n.length;
-        }
-
-        widgets.add(
-          GestureDetector(
-            onTap: () => setState(() {
-              _cursorPosition = currentPos;
-              _selectedStringIndex = stringIndex;
-            }),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 100),
-              width: maxLen * 10.0 + 6,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isCursor ? Theme.of(context).colorScheme.primary.withOpacity(0.2) : null,
-                border: isCursor
-                    ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
-                    : null,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                note == '-' ? '-' : note,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 13,
-                  fontWeight: note != '-' ? FontWeight.bold : FontWeight.normal,
-                  color: note != '-'
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                ),
-              ),
-            ),
-          ),
-        );
-        globalPos++;
-      }
-
-      if (barIdx < section.bars.length - 1) {
-        widgets.add(Container(
-          width: 16,
-          height: 24,
-          alignment: Alignment.center,
-          child: Text(
-            '|',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.secondary,
-            ),
-          ),
-        ));
-      }
-    }
-
-    return widgets;
-  }
-}
-
-class _HarmonicDialogContent extends StatefulWidget {
-  @override
-  State<_HarmonicDialogContent> createState() => _HarmonicDialogContentState();
-}
-
-class _HarmonicDialogContentState extends State<_HarmonicDialogContent> {
-  late final TextEditingController _controller;
-
-  // Common harmonic frets
-  final List<int> _commonHarmonics = [5, 7, 12, 19, 24];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit([String? preset]) {
-    final text = preset ?? _controller.text.trim();
-    Navigator.of(context).pop(text.isEmpty ? null : text);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '<>',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Natural Harmonic',
-                  style: theme.textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _commonHarmonics
-                  .map((fret) => FilledButton.tonal(
-                        onPressed: () => _submit(fret.toString()),
-                        child: Text('<$fret>'),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'Fret number (0-24)',
-                prefixIcon: Icon(Icons.music_note),
-              ),
-              autofocus: true,
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: () => _submit(),
-                  child: const Text('Add'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TabNameDialogContent extends StatefulWidget {
-  final String currentName;
-
-  const _TabNameDialogContent({required this.currentName});
-
-  @override
-  State<_TabNameDialogContent> createState() => _TabNameDialogContentState();
-}
-
-class _TabNameDialogContentState extends State<_TabNameDialogContent> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.currentName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final text = _controller.text.trim();
-    Navigator.of(context).pop(text.isEmpty ? null : text);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Dialog(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.music_note, color: theme.colorScheme.primary),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Tab Name',
-                  style: theme.textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                hintText: 'Enter tab name...',
-                prefixIcon: Icon(Icons.edit_outlined),
-              ),
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Save'),
-                ),
-              ],
             ),
           ],
         ),
