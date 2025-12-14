@@ -119,6 +119,7 @@ class GuitarTab {
   DateTime modifiedAt;
   List<TabSection> sections;
   Map<String, String> legend;
+  String? folderId;
 
   GuitarTab({
     required this.id,
@@ -128,6 +129,7 @@ class GuitarTab {
     required this.modifiedAt,
     List<TabSection>? sections,
     Map<String, String>? legend,
+    this.folderId,
   })  : sections = sections ?? [],
         legend = legend ?? _defaultLegend;
 
@@ -194,6 +196,7 @@ class GuitarTab {
         'modifiedAt': modifiedAt.toIso8601String(),
         'sections': sections.map((s) => s.toJson()).toList(),
         'legend': legend,
+        'folderId': folderId,
       };
 
   factory GuitarTab.fromJson(Map<String, dynamic> json) => GuitarTab(
@@ -209,6 +212,7 @@ class GuitarTab {
         legend: (json['legend'] as Map<String, dynamic>?)
                 ?.map((k, v) => MapEntry(k, v as String)) ??
             _defaultLegend,
+        folderId: json['folderId'] as String?,
       );
 
   String toJsonString() => jsonEncode(toJson());

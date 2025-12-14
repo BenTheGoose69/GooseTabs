@@ -5,9 +5,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/tab_model.dart';
+import '../models/folder_model.dart';
 
 class StorageService {
   static const String _tabsKey = 'saved_tabs';
+  static const String _foldersKey = 'folders';
   static final Uuid _uuid = Uuid();
 
   static String generateId() => _uuid.v4();
@@ -153,6 +155,65 @@ class StorageService {
       return GuitarTab.fromTabFormat(content, generateId());
     } catch (e) {
       return null;
+    }
+  }
+
+  // Folder methods
+
+  static Future<List<TabFolder>> loadAllFolders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final foldersJson = prefs.getStringList(_foldersKey) ?? [];
+
+    return foldersJson.map((json) {
+      try {
+        return TabFolder.fromJsonString(json);
+      } catch (e) {
+        return null;
+      }
+    }).whereType<TabFolder>().toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  static Future<void> saveFolder(TabFolder folder) async {
+    final prefs = await SharedPreferences.getInstance();
+    final folders = await loadAllFolders();
+
+    final existingIndex = folders.indexWhere((f) => f.id == folder.id);
+    if (existingIndex >= 0) {
+      folders[existingIndex] = folder;
+    } else {
+      folders.add(folder);
+    }
+
+    final foldersJson = folders.map((f) => f.toJsonString()).toList();
+    await prefs.setStringList(_foldersKey, foldersJson);
+  }
+
+  static Future<void> deleteFolder(String folderId) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Move all tabs in this folder to root (unfiled)
+    final tabs = await loadAllTabs();
+    for (final tab in tabs) {
+      if (tab.folderId == folderId) {
+        tab.folderId = null;
+        await saveTab(tab);
+      }
+    }
+
+    // Remove the folder
+    final folders = await loadAllFolders();
+    folders.removeWhere((f) => f.id == folderId);
+
+    final foldersJson = folders.map((f) => f.toJsonString()).toList();
+    await prefs.setStringList(_foldersKey, foldersJson);
+  }
+
+  static Future<void> moveTabToFolder(String tabId, String? folderId) async {
+    final tab = await getTab(tabId);
+    if (tab != null) {
+      tab.folderId = folderId;
+      await saveTab(tab);
     }
   }
 }

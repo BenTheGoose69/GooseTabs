@@ -6,6 +6,7 @@ class TabCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onView;
   final VoidCallback onDelete;
+  final VoidCallback? onMove;
 
   const TabCard({
     super.key,
@@ -13,6 +14,7 @@ class TabCard extends StatelessWidget {
     required this.onTap,
     required this.onView,
     required this.onDelete,
+    this.onMove,
   });
 
   String _getTabPreview(TabSection section, int stringIndex) {
@@ -114,6 +116,7 @@ class TabCard extends StatelessWidget {
           ),
           onSelected: (value) {
             if (value == 'view') onView();
+            if (value == 'move') onMove?.call();
             if (value == 'delete') onDelete();
           },
           itemBuilder: (context) => [
@@ -127,6 +130,17 @@ class TabCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (onMove != null)
+              const PopupMenuItem(
+                value: 'move',
+                child: Row(
+                  children: [
+                    Icon(Icons.drive_file_move_outlined),
+                    SizedBox(width: 12),
+                    Text('Move to folder'),
+                  ],
+                ),
+              ),
             PopupMenuItem(
               value: 'delete',
               child: Row(
