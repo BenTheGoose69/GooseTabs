@@ -3,6 +3,7 @@ import '../../services/storage_service.dart';
 import '../tab_editor/tab_editor_screen.dart';
 import '../tabs_list/tabs_list_screen.dart';
 import '../secret/blackjack_screen.dart';
+import '../settings/settings_screen.dart';
 import 'widgets/menu_card.dart';
 import 'widgets/new_tab_sheet.dart';
 
@@ -14,14 +15,12 @@ class MainMenuScreen extends StatefulWidget {
 }
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
-  int _recentTabsCount = 0;
   int _secretTapCount = 0;
   DateTime? _lastTapTime;
 
   @override
   void initState() {
     super.initState();
-    _loadRecentCount();
   }
 
   void _onSecretTap() {
@@ -55,11 +54,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     }
   }
 
-  Future<void> _loadRecentCount() async {
-    final tabs = await StorageService.loadAllTabs();
-    setState(() => _recentTabsCount = tabs.length);
-  }
-
   void _createNewTab(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -70,7 +64,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => TabEditorScreen(tab: tab)),
-          ).then((_) => _loadRecentCount());
+          );
         },
       ),
     );
@@ -80,7 +74,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const TabsListScreen()),
-    ).then((_) => _loadRecentCount());
+    );
   }
 
   Future<void> _importTab(BuildContext context) async {
@@ -97,8 +91,15 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => TabEditorScreen(tab: tab)),
-      ).then((_) => _loadRecentCount());
+      );
     }
+  }
+
+  void _openSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+    );
   }
 
   @override
@@ -125,8 +126,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             const SizedBox(height: 40),
                             _buildHeader(context),
                             const SizedBox(height: 48),
-                            _buildStatsCard(context),
-                            const SizedBox(height: 32),
                             _buildQuickActionsHeader(context),
                             const SizedBox(height: 16),
                             _buildMenuCards(context),
@@ -165,17 +164,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+              width: 2,
+            ),
           ),
-          child: const Icon(Icons.music_note, color: Colors.white, size: 32),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.asset(
+              'assets/icon/GooseTabsFinal.png',
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
         const SizedBox(width: 16),
         Column(
@@ -196,54 +197,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildStatsCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.library_music,
-            color: Theme.of(context).colorScheme.primary,
-            size: 28,
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$_recentTabsCount',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-              Text(
-                'Saved tabs',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -283,6 +236,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           subtitle: 'Import from a .txt or .tab file',
           color: const Color(0xFFFD79A8),
           onTap: () => _importTab(context),
+        ),
+        const SizedBox(height: 12),
+        MenuCard(
+          icon: Icons.settings_outlined,
+          title: 'Settings',
+          subtitle: 'Customize your experience',
+          color: const Color(0xFF74B9FF),
+          onTap: () => _openSettings(context),
         ),
       ],
     );

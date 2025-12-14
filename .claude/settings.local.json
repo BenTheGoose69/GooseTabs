@@ -44,7 +44,10 @@
       "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''\")",
       "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\tabs_list\\tabs_list_screen.dart''\")",
       "Bash(\"C:/Users/Bendi/flutter/bin/flutter.bat\" analyze)",
-      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" analyze lib/screens/secret)"
+      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" analyze lib/screens/secret)",
+      "Bash(C:UsersBendiflutterbinflutter analyze libscreensmain_menumain_menu_screen.dart libscreenstabs_listtabs_list_screen.dart)",
+      "Bash(C:UsersBendiflutterbinflutter.bat analyze \"C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\main_menu\\main_menu_screen.dart\" \"C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\tabs_list\\tabs_list_screen.dart\")",
+      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\":*)"
     ]
   }
 }

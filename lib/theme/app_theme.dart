@@ -1,36 +1,47 @@
 import 'package:flutter/material.dart';
+import '../services/settings_service.dart';
 
 class AppTheme {
-  // Color constants - Pastel Orange palette
-  static const primaryColor = Color(0xFFFFAB91);    // Soft peachy orange
-  static const secondaryColor = Color(0xFFFFCC80);  // Warm light orange
-  static const accentOrange = Color(0xFFFFB74D);    // Brighter orange accent
+  // Base colors
   static const backgroundColor = Color(0xFF121212);
   static const surfaceColor = Color(0xFF1E1E1E);
   static const cardColor = Color(0xFF262626);
 
-  static ThemeData buildDarkTheme() {
+  static Color _getAccentColor(Color primary) {
+    final hsl = HSLColor.fromColor(primary);
+    return hsl.withLightness((hsl.lightness + 0.1).clamp(0.0, 1.0)).toColor();
+  }
+
+  static ThemeData buildDarkTheme(ColorSchemeType colorScheme) {
+    final primaryColor = colorScheme.primary;
+    final secondaryColor = colorScheme.secondary;
+    final accentColor = _getAccentColor(primaryColor);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         primary: primaryColor,
         secondary: secondaryColor,
-        tertiary: accentOrange,
+        tertiary: accentColor,
         surface: surfaceColor,
-        error: Color(0xFFCF6679),
+        error: const Color(0xFFCF6679),
         onPrimary: Colors.black,
         onSecondary: Colors.black,
-        onSurface: Color(0xFFE0E0E0),
+        onSurface: const Color(0xFFE0E0E0),
         onError: Colors.black,
-        primaryContainer: Color(0xFF5C4A3A),
-        secondaryContainer: Color(0xFF4A3D2A),
+        primaryContainer: HSLColor.fromColor(primaryColor)
+            .withLightness(0.25)
+            .toColor(),
+        secondaryContainer: HSLColor.fromColor(secondaryColor)
+            .withLightness(0.2)
+            .toColor(),
         surfaceContainerHighest: cardColor,
-        surfaceContainerHigh: Color(0xFF1A1A1A),
-        outline: Color(0xFF404040),
-        outlineVariant: Color(0xFF2A2A2A),
+        surfaceContainerHigh: const Color(0xFF1A1A1A),
+        outline: const Color(0xFF404040),
+        outlineVariant: const Color(0xFF2A2A2A),
       ),
       cardTheme: CardThemeData(
         color: cardColor,
@@ -71,7 +82,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryColor,
-          side: const BorderSide(color: primaryColor),
+          side: BorderSide(color: primaryColor),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -94,7 +105,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
@@ -119,30 +130,51 @@ class AppTheme {
         thickness: 1,
       ),
       iconTheme: const IconThemeData(color: Color(0xFF9E9E9E)),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColor;
+          }
+          return const Color(0xFF9E9E9E);
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColor.withValues(alpha: 0.5);
+          }
+          return const Color(0xFF404040);
+        }),
+      ),
     );
   }
 
-  static ThemeData buildLightTheme() {
+  static ThemeData buildLightTheme(ColorSchemeType colorScheme) {
+    final primaryColor = colorScheme.primary;
+    final secondaryColor = colorScheme.secondary;
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
         surface: Colors.white,
-        error: Color(0xFFB00020),
+        error: const Color(0xFFB00020),
         onPrimary: Colors.white,
         onSecondary: Colors.black,
-        onSurface: Color(0xFF212121),
+        onSurface: const Color(0xFF212121),
         onError: Colors.white,
-        primaryContainer: Color(0xFFFFE0B2),
-        secondaryContainer: Color(0xFFFFECB3),
-        surfaceContainerHighest: Color(0xFFFFFFFF),
-        surfaceContainerHigh: Color(0xFFF5F5F5),
-        outline: Color(0xFFBDBDBD),
-        outlineVariant: Color(0xFFE0E0E0),
+        primaryContainer: HSLColor.fromColor(primaryColor)
+            .withLightness(0.85)
+            .toColor(),
+        secondaryContainer: HSLColor.fromColor(secondaryColor)
+            .withLightness(0.85)
+            .toColor(),
+        surfaceContainerHighest: const Color(0xFFFFFFFF),
+        surfaceContainerHigh: const Color(0xFFF5F5F5),
+        outline: const Color(0xFFBDBDBD),
+        outlineVariant: const Color(0xFFE0E0E0),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
@@ -185,8 +217,22 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColor;
+          }
+          return const Color(0xFF9E9E9E);
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColor.withValues(alpha: 0.5);
+          }
+          return const Color(0xFFE0E0E0);
+        }),
       ),
     );
   }
