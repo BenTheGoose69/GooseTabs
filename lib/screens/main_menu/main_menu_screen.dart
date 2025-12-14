@@ -106,23 +106,37 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 40),
-                  _buildHeader(context),
-                  const SizedBox(height: 48),
-                  _buildStatsCard(context),
-                  const SizedBox(height: 32),
-                  _buildQuickActionsHeader(context),
-                  const SizedBox(height: 16),
-                  _buildMenuCards(context),
-                  const Spacer(),
-                  _buildFooter(context),
-                ],
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - 48, // Account for padding
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 40),
+                            _buildHeader(context),
+                            const SizedBox(height: 48),
+                            _buildStatsCard(context),
+                            const SizedBox(height: 32),
+                            _buildQuickActionsHeader(context),
+                            const SizedBox(height: 16),
+                            _buildMenuCards(context),
+                          ],
+                        ),
+                        _buildFooter(context),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           // Secret tap zone - bottom left corner

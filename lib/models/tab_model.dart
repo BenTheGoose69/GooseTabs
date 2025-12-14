@@ -140,6 +140,7 @@ class GuitarTab {
     '\\': 'Slide Down',
     '+': 'Natural Harmonic',
     '~': 'Vibrato',
+    'x': 'Dead Note',
   };
 
   static final List<String> standardTunings = [
@@ -519,8 +520,8 @@ class GuitarTab {
       final char = content[i];
       if (char == '-') break; // End of note (separator dash)
 
-      // Valid note characters: digits and technique symbols
-      if (RegExp(r'[\dhpbt/\\~+]').hasMatch(char)) {
+      // Valid note characters: digits, technique symbols, # for sharps, x for dead notes
+      if (RegExp(r'[\dhpbt/\\~+#x]').hasMatch(char)) {
         buffer.write(char);
         i++;
       } else {

@@ -15,11 +15,27 @@ class TabsListScreen extends StatefulWidget {
 class _TabsListScreenState extends State<TabsListScreen> {
   List<GuitarTab> _tabs = [];
   bool _isLoading = true;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  List<GuitarTab> get _filteredTabs {
+    if (_searchQuery.isEmpty) return _tabs;
+    return _tabs
+        .where((tab) =>
+            tab.songName.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _loadTabs();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadTabs() async {
@@ -136,20 +152,64 @@ class _TabsListScreenState extends State<TabsListScreen> {
   }
 
   Widget _buildTabsList() {
+    final tabs = _filteredTabs;
+
     return RefreshIndicator(
       onRefresh: _loadTabs,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _tabs.length,
-        itemBuilder: (context, index) {
-          final tab = _tabs[index];
-          return TabCard(
-            tab: tab,
-            onTap: () => _editTab(tab),
-            onView: () => _viewTab(tab),
-            onDelete: () => _deleteTab(tab),
-          );
-        },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search tabs...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
+          ),
+          Expanded(
+            child: tabs.isEmpty
+                ? Center(
+                    child: Text(
+                      'No tabs match "$_searchQuery"',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.6),
+                          ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    itemCount: tabs.length,
+                    itemBuilder: (context, index) {
+                      final tab = tabs[index];
+                      return TabCard(
+                        tab: tab,
+                        onTap: () => _editTab(tab),
+                        onView: () => _viewTab(tab),
+                        onDelete: () => _deleteTab(tab),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }

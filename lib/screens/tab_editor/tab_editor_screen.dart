@@ -523,7 +523,9 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
               onTuningTap: _editStringTuning,
               onFretTap: (stringIndex, fret) {
                 setState(() => _selectedStringIndex = stringIndex);
-                _addNote(fret.toString());
+                // Handle dead note (x) vs regular fret numbers
+                final note = fret < 0 ? 'x' : fret.toString();
+                _addNote(note);
               },
             ),
             TechniqueToolbar(

@@ -19,6 +19,7 @@ class Fretboard extends StatelessWidget {
   });
 
   static const int maxFret = 24;
+  static const int deadNote = -1; // "x" for muted/dead notes
 
   @override
   Widget build(BuildContext context) {
@@ -183,11 +184,18 @@ class _FretGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Frets 0-24 plus dead note (x) at the end
+    final fretValues = [
+      ...List.generate(Fretboard.maxFret + 1, (i) => i),
+      Fretboard.deadNote,
+    ];
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: List.generate(Fretboard.maxFret + 1, (fret) {
+        children: fretValues.map((fret) {
           final isMarkerFret = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24].contains(fret);
+          final isDeadNote = fret == Fretboard.deadNote;
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: List.generate(stringNames.length, (stringIndex) {
@@ -195,6 +203,7 @@ class _FretGrid extends StatelessWidget {
                 stringIndex: stringIndex,
                 fret: fret,
                 isMarkerFret: isMarkerFret,
+                isDeadNote: isDeadNote,
                 isSelectedRow: stringIndex == selectedStringIndex,
                 hasChordNote: chordNotes.containsKey(stringIndex),
                 onTap: () {
@@ -204,7 +213,7 @@ class _FretGrid extends StatelessWidget {
               );
             }),
           );
-        }),
+        }).toList(),
       ),
     );
   }
@@ -214,6 +223,7 @@ class _FretCell extends StatelessWidget {
   final int stringIndex;
   final int fret;
   final bool isMarkerFret;
+  final bool isDeadNote;
   final bool isSelectedRow;
   final bool hasChordNote;
   final VoidCallback onTap;
@@ -222,6 +232,7 @@ class _FretCell extends StatelessWidget {
     required this.stringIndex,
     required this.fret,
     required this.isMarkerFret,
+    required this.isDeadNote,
     required this.isSelectedRow,
     required this.hasChordNote,
     required this.onTap,
@@ -240,28 +251,34 @@ class _FretCell extends StatelessWidget {
               ? Theme.of(context).colorScheme.secondary.withOpacity(0.2)
               : isSelectedRow
                   ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
-                  : isMarkerFret
-                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.08)
-                      : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                  : isDeadNote
+                      ? Theme.of(context).colorScheme.error.withOpacity(0.08)
+                      : isMarkerFret
+                          ? Theme.of(context).colorScheme.secondary.withOpacity(0.08)
+                          : Theme.of(context).colorScheme.surface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: hasChordNote
                 ? Theme.of(context).colorScheme.secondary
-                : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                : isDeadNote
+                    ? Theme.of(context).colorScheme.error.withOpacity(0.3)
+                    : Theme.of(context).colorScheme.outline.withOpacity(0.2),
             width: hasChordNote ? 1.5 : 0.5,
           ),
         ),
         alignment: Alignment.center,
         child: Text(
-          fret.toString(),
+          isDeadNote ? 'x' : fret.toString(),
           style: TextStyle(
-            fontSize: fret >= 10 ? 11 : 12,
-            fontWeight: isMarkerFret ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 12,
+            fontWeight: isDeadNote || isMarkerFret ? FontWeight.w600 : FontWeight.normal,
             color: hasChordNote
                 ? Theme.of(context).colorScheme.secondary
-                : isSelectedRow
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                : isDeadNote
+                    ? Theme.of(context).colorScheme.error
+                    : isSelectedRow
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
       ),

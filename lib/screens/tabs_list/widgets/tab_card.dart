@@ -163,22 +163,37 @@ class TabCard extends StatelessWidget {
           ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(
-                tab.sections.first.stringCount,
-                (i) {
-                  final section = tab.sections.first;
-                  return Text(
-                    '${section.stringNames[i]}|${_getTabPreview(section, i)}',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  );
-                },
-              ),
+            child: Builder(
+              builder: (context) {
+                final section = tab.sections.first;
+                // Find max string name length for alignment
+                int maxNameLen = 1;
+                for (final name in section.stringNames) {
+                  if (name.length > maxNameLen) maxNameLen = name.length;
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: List.generate(
+                    section.stringCount,
+                    (i) {
+                      var stringName = section.stringNames[i];
+                      // Pad shorter string names for alignment
+                      while (stringName.length < maxNameLen) {
+                        stringName = '$stringName ';
+                      }
+                      return Text(
+                        '$stringName|${_getTabPreview(section, i)}',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
           ),
         ),
