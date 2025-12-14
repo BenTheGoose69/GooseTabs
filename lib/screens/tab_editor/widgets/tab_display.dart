@@ -26,6 +26,118 @@ class TabDisplay extends StatelessWidget {
     required this.onCellTap,
   });
 
+  /// Build colored text spans for the section
+  List<TextSpan> _buildColoredLine(BuildContext context, int stringIdx) {
+    final spans = <TextSpan>[];
+    final colors = _NoteColors.from(context);
+    int globalCol = 0;
+
+    // Find max string name length for alignment
+    int maxNameLen = 1;
+    for (final name in section.stringNames) {
+      if (name.length > maxNameLen) maxNameLen = name.length;
+    }
+
+    // String name (padded for alignment)
+    var stringName = section.stringNames[stringIdx];
+    while (stringName.length < maxNameLen) {
+      stringName = '$stringName ';
+    }
+    spans.add(TextSpan(
+      text: stringName,
+      style: TextStyle(color: colors.stringName, fontWeight: FontWeight.bold),
+    ));
+
+    spans.add(TextSpan(text: '|', style: TextStyle(color: colors.barLine)));
+
+    for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
+      final bar = section.bars[barIdx];
+
+      for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
+        final column = bar.columns[colIdx];
+        final columnWidth = column.width;
+
+        var note = column.notes[stringIdx];
+
+        // Pad note with dashes to match column width
+        while (note.length < columnWidth) {
+          note += '-';
+        }
+
+        // Check if this is the cursor column
+        final isCursorColumn = globalCol == cursorPosition;
+
+        // Color the note based on content, with cursor highlight
+        spans.add(_colorizeNote(note, colors, isCursorColumn));
+
+        // Add separator dash after each column
+        spans.add(TextSpan(
+          text: '-',
+          style: TextStyle(
+            color: colors.dash,
+            backgroundColor: isCursorColumn ? colors.cursorBg : null,
+          ),
+        ));
+
+        globalCol++;
+      }
+      spans.add(TextSpan(text: '|', style: TextStyle(color: colors.barLine)));
+    }
+
+    // Repeat marker on last string
+    if (stringIdx == section.stringCount - 1 && section.repeatCount > 1) {
+      spans.add(TextSpan(
+        text: ' x${section.repeatCount}',
+        style: TextStyle(color: colors.repeat, fontWeight: FontWeight.bold),
+      ));
+    }
+
+    return spans;
+  }
+
+  TextSpan _colorizeNote(String note, _NoteColors colors, bool isCursorColumn) {
+    if (note.replaceAll('-', '').isEmpty) {
+      // All dashes
+      return TextSpan(
+        text: note,
+        style: TextStyle(
+          color: colors.dash,
+          backgroundColor: isCursorColumn ? colors.cursorBg : null,
+        ),
+      );
+    }
+
+    // Build spans for mixed content (e.g., "5h6", "12-", "h3", "/6")
+    final spans = <TextSpan>[];
+    for (int i = 0; i < note.length; i++) {
+      final char = note[i];
+      Color color;
+      if (char == '-') {
+        color = colors.dash;
+      } else if (RegExp(r'\d').hasMatch(char)) {
+        color = colors.fret;
+      } else if ('hpbt'.contains(char)) {
+        color = colors.technique;
+      } else if (char == '/' || char == '\\') {
+        color = colors.slide;
+      } else if (char == '~') {
+        color = colors.vibrato;
+      } else if (char == '+') {
+        color = colors.harmonic;
+      } else {
+        color = colors.fret;
+      }
+      spans.add(TextSpan(
+        text: char,
+        style: TextStyle(
+          color: color,
+          backgroundColor: isCursorColumn ? colors.cursorBg : null,
+        ),
+      ));
+    }
+    return TextSpan(children: spans);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRect(
@@ -46,11 +158,27 @@ class TabDisplay extends StatelessWidget {
                 child: SingleChildScrollView(
                   controller: scrollController,
                   scrollDirection: Axis.horizontal,
-                  child: _TabLines(
-                    section: section,
-                    cursorPosition: cursorPosition,
-                    selectedStringIndex: selectedStringIndex,
-                    onCellTap: onCellTap,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: List.generate(section.stringCount, (stringIdx) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 14,
+                                ),
+                                children: _buildColoredLine(context, stringIdx),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -58,6 +186,48 @@ class TabDisplay extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NoteColors {
+  final Color stringName;
+  final Color barLine;
+  final Color dash;
+  final Color fret;
+  final Color technique;
+  final Color slide;
+  final Color vibrato;
+  final Color harmonic;
+  final Color repeat;
+  final Color cursorBg;
+
+  _NoteColors({
+    required this.stringName,
+    required this.barLine,
+    required this.dash,
+    required this.fret,
+    required this.technique,
+    required this.slide,
+    required this.vibrato,
+    required this.harmonic,
+    required this.repeat,
+    required this.cursorBg,
+  });
+
+  factory _NoteColors.from(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return _NoteColors(
+      stringName: scheme.primary,
+      barLine: scheme.outline,
+      dash: scheme.onSurface.withOpacity(0.3),
+      fret: scheme.primary,
+      technique: Colors.cyan,
+      slide: Colors.orange,
+      vibrato: Colors.purple,
+      harmonic: Colors.tealAccent,
+      repeat: scheme.secondary,
+      cursorBg: scheme.primary.withOpacity(0.3),
     );
   }
 }
@@ -110,228 +280,3 @@ class _NavigationControls extends StatelessWidget {
   }
 }
 
-class _TabLines extends StatelessWidget {
-  final TabSection section;
-  final int cursorPosition;
-  final int selectedStringIndex;
-  final Function(int position, int stringIndex) onCellTap;
-
-  const _TabLines({
-    required this.section,
-    required this.cursorPosition,
-    required this.selectedStringIndex,
-    required this.onCellTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Calculate cursor column position and width
-    double cursorX = 24 + 8; // String name width (24) + bar line text (~8)
-    double cursorWidth = 16;
-    int globalPos = 0;
-
-    for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
-      final bar = section.bars[barIdx];
-      for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
-        // Calculate max width for this column
-        int maxLen = 1;
-        for (int s = 0; s < section.stringCount; s++) {
-          final n = bar.getNote(colIdx, s);
-          if (n.length > maxLen) maxLen = n.length;
-        }
-        final colWidth = maxLen * 10.0 + 6;
-
-        if (globalPos == cursorPosition) {
-          cursorWidth = colWidth;
-          break;
-        }
-        cursorX += colWidth;
-        globalPos++;
-      }
-      if (globalPos == cursorPosition) break;
-      cursorX += 8; // Bar separator text width (~8)
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Stack(
-          children: [
-            // The actual tab content (rendered first so stripe is on top)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(section.stringCount, (stringIndex) {
-                return _StringLine(
-                  section: section,
-                  stringIndex: stringIndex,
-                  selectedStringIndex: selectedStringIndex,
-                  onCellTap: onCellTap,
-                );
-              }),
-            ),
-            // The stripe overlay on top
-            Positioned(
-              left: cursorX,
-              top: 0,
-              bottom: 0,
-              width: cursorWidth,
-              child: IgnorePointer(
-                child: Container(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StringLine extends StatelessWidget {
-  final TabSection section;
-  final int stringIndex;
-  final int selectedStringIndex;
-  final Function(int position, int stringIndex) onCellTap;
-
-  const _StringLine({
-    required this.section,
-    required this.stringIndex,
-    required this.selectedStringIndex,
-    required this.onCellTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final stringName = section.stringNames[stringIndex];
-    final isSelectedString = stringIndex == selectedStringIndex;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isSelectedString ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 24,
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Text(
-              stringName,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isSelectedString
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ),
-          Text(
-            '|',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-          ..._buildNoteWidgets(context),
-          Text(
-            '|',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-          if (stringIndex == section.stringCount - 1 && section.repeatCount > 1)
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.secondary,
-                    Theme.of(context).colorScheme.secondary.withOpacity(0.8),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                'x${section.repeatCount}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildNoteWidgets(BuildContext context) {
-    List<Widget> widgets = [];
-    int globalPos = 0;
-
-    for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
-      final bar = section.bars[barIdx];
-
-      for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
-        final note = bar.getNote(colIdx, stringIndex);
-        final currentPos = globalPos;
-
-        int maxLen = 1;
-        for (int s = 0; s < section.stringCount; s++) {
-          final n = bar.getNote(colIdx, s);
-          if (n.length > maxLen) maxLen = n.length;
-        }
-
-        widgets.add(
-          GestureDetector(
-            onTap: () => onCellTap(currentPos, stringIndex),
-            child: Container(
-              width: maxLen * 10.0 + 6,
-              height: 24,
-              alignment: Alignment.center,
-              child: Text(
-                note,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 13,
-                  fontWeight: note != '-' ? FontWeight.bold : FontWeight.normal,
-                  color: note != '-'
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                ),
-              ),
-            ),
-          ),
-        );
-        globalPos++;
-      }
-
-      if (barIdx < section.bars.length - 1) {
-        widgets.add(Container(
-          width: 16,
-          height: 24,
-          alignment: Alignment.center,
-          child: Text(
-            '|',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.secondary,
-            ),
-          ),
-        ));
-      }
-    }
-
-    return widgets;
-  }
-}

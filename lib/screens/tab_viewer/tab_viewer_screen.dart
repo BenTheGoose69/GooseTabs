@@ -315,81 +315,18 @@ class TabViewerScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(section.stringCount, (stringIndex) {
-                    final isLast = stringIndex == section.stringCount - 1;
-                    return Row(
-                      children: [
-                        Container(
-                          width: 20,
-                          margin: const EdgeInsets.only(right: 4),
-                          child: Text(
-                            section.stringNames[stringIndex],
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '|',
-                          style: TextStyle(
+                  children: List.generate(section.stringCount, (stringIdx) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.outline,
                           ),
+                          children: _buildColoredLine(context, section, stringIdx),
                         ),
-                        ...section.bars.asMap().entries.map((barEntry) {
-                          final bar = barEntry.value;
-                          final barIndex = barEntry.key;
-
-                          return Row(
-                            children: [
-                              ..._buildBarNotes(context, bar, stringIndex, section.stringCount),
-                              Text(
-                                '|',
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: barIndex < section.bars.length - 1
-                                      ? Theme.of(context).colorScheme.secondary
-                                      : Theme.of(context).colorScheme.outline,
-                                ),
-                              ),
-                              if (isLast &&
-                                  section.repeatCount > 1 &&
-                                  barIndex == section.bars.length - 1)
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Theme.of(context).colorScheme.secondary,
-                                        Theme.of(context).colorScheme.secondary.withOpacity(0.8),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    'x${section.repeatCount}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        }),
-                      ],
+                      ),
                     );
                   }),
                 ),
@@ -401,38 +338,90 @@ class TabViewerScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildBarNotes(BuildContext context, TabMeasure bar, int stringIndex, int totalStrings) {
-    List<Widget> widgets = [];
+  /// Build colored text spans for a section line
+  List<TextSpan> _buildColoredLine(BuildContext context, TabSection section, int stringIdx) {
+    final spans = <TextSpan>[];
+    final scheme = Theme.of(context).colorScheme;
 
-    for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
-      final note = bar.getNote(colIdx, stringIndex);
+    // Colors
+    final stringNameColor = scheme.primary;
+    final barLineColor = scheme.outline;
+    final dashColor = scheme.onSurface.withOpacity(0.3);
+    final fretColor = scheme.primary;
+    const techniqueColor = Colors.cyan;
+    const slideColor = Colors.orange;
+    const vibratoColor = Colors.purple;
+    const harmonicColor = Colors.tealAccent;
+    final repeatColor = scheme.secondary;
 
-      int maxLen = 1;
-      for (int s = 0; s < totalStrings; s++) {
-        final n = bar.getNote(colIdx, s);
-        if (n.length > maxLen) maxLen = n.length;
-      }
-
-      widgets.add(
-        SizedBox(
-          width: maxLen * 9.0 + 4,
-          child: Text(
-            note,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
-              fontWeight: note != '-' ? FontWeight.bold : FontWeight.normal,
-              color: note != '-'
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-            ),
-          ),
-        ),
-      );
+    // Find max string name length for alignment
+    int maxNameLen = 1;
+    for (final name in section.stringNames) {
+      if (name.length > maxNameLen) maxNameLen = name.length;
     }
 
-    return widgets;
+    // String name (padded for alignment)
+    var stringName = section.stringNames[stringIdx];
+    while (stringName.length < maxNameLen) {
+      stringName = '$stringName ';
+    }
+    spans.add(TextSpan(
+      text: stringName,
+      style: TextStyle(color: stringNameColor, fontWeight: FontWeight.bold),
+    ));
+    spans.add(TextSpan(text: '|', style: TextStyle(color: barLineColor)));
+
+    for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
+      final bar = section.bars[barIdx];
+
+      for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
+        final column = bar.columns[colIdx];
+        final columnWidth = column.width;
+
+        var note = column.notes[stringIdx];
+
+        // Pad note with dashes to match column width
+        while (note.length < columnWidth) {
+          note += '-';
+        }
+
+        // Color each character
+        for (int i = 0; i < note.length; i++) {
+          final char = note[i];
+          Color color;
+          if (char == '-') {
+            color = dashColor;
+          } else if (RegExp(r'\d').hasMatch(char)) {
+            color = fretColor;
+          } else if ('hpbt'.contains(char)) {
+            color = techniqueColor;
+          } else if (char == '/' || char == '\\') {
+            color = slideColor;
+          } else if (char == '~') {
+            color = vibratoColor;
+          } else if (char == '+') {
+            color = harmonicColor;
+          } else {
+            color = fretColor;
+          }
+          spans.add(TextSpan(text: char, style: TextStyle(color: color)));
+        }
+
+        // Add separator dash after each column
+        spans.add(TextSpan(text: '-', style: TextStyle(color: dashColor)));
+      }
+      spans.add(TextSpan(text: '|', style: TextStyle(color: barLineColor)));
+    }
+
+    // Repeat marker on last string
+    if (stringIdx == section.stringCount - 1 && section.repeatCount > 1) {
+      spans.add(TextSpan(
+        text: ' x${section.repeatCount}',
+        style: TextStyle(color: repeatColor, fontWeight: FontWeight.bold),
+      ));
+    }
+
+    return spans;
   }
 
   Widget _buildLegend(BuildContext context) {

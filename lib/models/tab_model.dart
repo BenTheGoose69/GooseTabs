@@ -138,7 +138,7 @@ class GuitarTab {
     't': 'Tap',
     '/': 'Slide Up',
     '\\': 'Slide Down',
-    '◆': 'Natural Harmonic',
+    '+': 'Natural Harmonic',
     '~': 'Vibrato',
   };
 
@@ -226,40 +226,37 @@ class GuitarTab {
         buffer.writeln('[${section.label}]');
       }
 
-      // Pre-calculate UNIFORM column width for each bar (max width across ALL columns and strings)
-      // Account for ◆ -> <> conversion which adds 1 character
-      final barUniformWidths = <int>[];
-      for (final bar in section.bars) {
-        int maxWidth = 1;
-        for (final column in bar.columns) {
-          for (final note in column.notes) {
-            int width = note.length;
-            // ◆5 becomes <5> which is 1 char longer
-            if (note.startsWith('◆')) width += 1;
-            if (width > maxWidth) maxWidth = width;
-          }
-        }
-        barUniformWidths.add(maxWidth);
+      // Find max string name length for alignment (handles # in names like F#)
+      int maxNameLen = 1;
+      for (final name in section.stringNames) {
+        if (name.length > maxNameLen) maxNameLen = name.length;
       }
 
-      // Build each string line across all bars
-      // Each column uses uniform width + separator dash for alignment
+      // Export with proper alignment - each column padded to its width
       for (int stringIdx = 0; stringIdx < section.stringCount; stringIdx++) {
-        final stringName = section.stringNames[stringIdx].padRight(2);
+        var stringName = section.stringNames[stringIdx];
+        // Pad shorter string names with space for alignment
+        while (stringName.length < maxNameLen) {
+          stringName = '$stringName ';
+        }
         buffer.write('$stringName|');
 
         for (int barIdx = 0; barIdx < section.bars.length; barIdx++) {
           final bar = section.bars[barIdx];
-          final uniformWidth = barUniformWidths[barIdx];
 
           for (int colIdx = 0; colIdx < bar.columns.length; colIdx++) {
-            var note = bar.columns[colIdx].notes[stringIdx];
-            // Convert ◆ to <> format for ASCII compatibility (◆5 -> <5>)
-            if (note.startsWith('◆')) {
-              note = '<${note.substring(1)}>';
+            final column = bar.columns[colIdx];
+            final columnWidth = column.width;
+
+            var note = column.notes[stringIdx];
+
+            // Pad note with dashes to match column width for alignment
+            while (note.length < columnWidth) {
+              note += '-';
             }
-            // Pad note to uniform width, then add separator dash
-            buffer.write('${note.padRight(uniformWidth, '-')}-');
+            buffer.write(note);
+            // Add separator dash after each column
+            buffer.write('-');
           }
           buffer.write('|');
         }
@@ -290,8 +287,7 @@ class GuitarTab {
     if (usedSymbols.isNotEmpty) {
       buffer.writeln('Legend:');
       for (final entry in usedSymbols.entries) {
-        // Use <> notation for harmonics in legend
-        final symbol = entry.key == '◆' ? '<>' : entry.key;
+        final symbol = entry.key == '◆' ? '+' : entry.key;
         buffer.writeln('  $symbol = ${entry.value}');
       }
     }
@@ -421,53 +417,43 @@ class GuitarTab {
       }
     }
 
-    // Parse each bar
+    // Parse each bar - SIMPLE: each character position = one column
     for (final barContent in barContents) {
       final bar = TabMeasure(stringCount: stringNames.length);
 
-      // Detect column width by finding note positions across all strings
-      final columnWidth = _detectColumnWidth(barContent);
+      // Find the longest string content to determine number of columns
+      int maxLen = 0;
+      for (final content in barContent) {
+        if (content.length > maxLen) maxLen = content.length;
+      }
 
-      if (columnWidth > 0) {
-        // Parse using detected uniform column width
-        final contentLength = barContent.isNotEmpty ? barContent[0].length : 0;
-        final numColumns = (contentLength / columnWidth).ceil();
+      if (maxLen == 0) {
+        bar.addColumn();
+        section.bars.add(bar);
+        continue;
+      }
 
-        for (int colIdx = 0; colIdx < numColumns; colIdx++) {
-          final column = TabColumn(stringNames.length);
-          final startPos = colIdx * columnWidth;
+      // Parse each string content, grouping multi-character notes together
+      final parsedStrings = <List<String>>[];
+      for (final content in barContent) {
+        parsedStrings.add(_parseStringContent(content));
+      }
 
-          for (int stringIdx = 0; stringIdx < barContent.length; stringIdx++) {
-            final content = barContent[stringIdx];
-            if (startPos < content.length) {
-              final endPos = (startPos + columnWidth - 1).clamp(0, content.length);
-              final colContent = content.substring(startPos, endPos);
-              column.notes[stringIdx] = _parseColumnContent(colContent);
-            }
+      // Find max columns
+      int maxCols = 0;
+      for (final parsed in parsedStrings) {
+        if (parsed.length > maxCols) maxCols = parsed.length;
+      }
+
+      // Create columns
+      for (int colIdx = 0; colIdx < maxCols; colIdx++) {
+        final column = TabColumn(stringNames.length);
+        for (int stringIdx = 0; stringIdx < parsedStrings.length; stringIdx++) {
+          if (colIdx < parsedStrings[stringIdx].length) {
+            column.notes[stringIdx] = parsedStrings[stringIdx][colIdx];
           }
-          bar.columns.add(column);
         }
-      } else {
-        // Fallback: parse each string independently (old format)
-        final parsedNotes = <List<String>>[];
-        for (final content in barContent) {
-          parsedNotes.add(_parseContinuousFormat(content));
-        }
-
-        int maxNotes = 0;
-        for (final notes in parsedNotes) {
-          if (notes.length > maxNotes) maxNotes = notes.length;
-        }
-
-        for (int colIdx = 0; colIdx < maxNotes; colIdx++) {
-          final column = TabColumn(stringNames.length);
-          for (int stringIdx = 0; stringIdx < parsedNotes.length; stringIdx++) {
-            if (colIdx < parsedNotes[stringIdx].length) {
-              column.notes[stringIdx] = parsedNotes[stringIdx][colIdx];
-            }
-          }
-          bar.columns.add(column);
-        }
+        bar.columns.add(column);
       }
 
       if (bar.columns.isEmpty) {
@@ -484,234 +470,57 @@ class GuitarTab {
     return section;
   }
 
-  /// Detect uniform column width from bar content by finding note positions
-  static int _detectColumnWidth(List<String> barContent) {
-    if (barContent.isEmpty) return 0;
+  /// Smart parsing: group multi-character notes together (e.g., 5h6, 12, +9, h3, /6)
+  static List<String> _parseStringContent(String content) {
+    final result = <String>[];
+    int i = 0;
 
-    // Collect all positions where notes start across all strings
-    final notePositions = <int>{};
+    while (i < content.length) {
+      final char = content[i];
 
-    for (final content in barContent) {
-      int pos = 0;
-      while (pos < content.length) {
-        final char = content[pos];
-        // Note starts: digit, ◆, x/X, or <
-        if (RegExp(r'[\d◆xX<]').hasMatch(char)) {
-          notePositions.add(pos);
-          // Skip past this note
-          if (char == '◆') {
-            pos++;
-            while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-              pos++;
-            }
-          } else if (char == '<') {
-            final endIdx = content.indexOf('>', pos);
-            pos = endIdx > pos ? endIdx + 1 : pos + 1;
-          } else if (RegExp(r'\d').hasMatch(char)) {
-            while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-              pos++;
-            }
-            // Skip technique modifiers
-            while (pos < content.length && RegExp(r'[hpbt/\\~b]').hasMatch(content[pos])) {
-              pos++;
-              // Skip target fret
-              while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-                pos++;
-              }
-            }
-          } else {
-            pos++;
-          }
-        } else {
-          pos++;
-        }
-      }
-    }
-
-    if (notePositions.isEmpty) {
-      // All dashes - could be any column width, default to treating as single column
-      return barContent[0].length;
-    }
-
-    // Sort positions and find the gaps
-    final sortedPositions = notePositions.toList()..sort();
-
-    // Find GCD of all gaps to determine column width
-    int gcd(int a, int b) => b == 0 ? a : gcd(b, a % b);
-
-    int? columnWidth;
-    for (int i = 0; i < sortedPositions.length; i++) {
-      final gap = i == 0 ? sortedPositions[i] : sortedPositions[i] - sortedPositions[i - 1];
-      if (gap > 0) {
-        columnWidth = columnWidth == null ? gap : gcd(columnWidth, gap);
-      }
-    }
-
-    // Also consider gap from first position to 0
-    if (sortedPositions.isNotEmpty && sortedPositions[0] > 0) {
-      columnWidth = columnWidth == null
-          ? sortedPositions[0]
-          : gcd(columnWidth, sortedPositions[0]);
-    }
-
-    // Column width should include separator, minimum 2
-    return columnWidth != null && columnWidth >= 2 ? columnWidth : 0;
-  }
-
-  /// Parse old continuous format: "5-12-5h-4/3---"
-  static List<String> _parseContinuousFormat(String content) {
-    final notes = <String>[];
-    int pos = 0;
-
-    while (pos < content.length) {
-      final char = content[pos];
-
-      // Skip dashes (each dash is a separate empty column)
       if (char == '-') {
-        notes.add('-');
-        pos++;
-        continue;
-      }
-
-      // Parse harmonic ◆ followed by digits
-      if (char == '◆') {
-        String note = '◆';
-        pos++;
-        // Read digits after ◆
-        while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-          note += content[pos];
-          pos++;
-        }
-        notes.add(note);
-        continue;
-      }
-
-      // Parse old-style harmonic <number>
-      if (char == '<') {
-        final endIdx = content.indexOf('>', pos);
-        if (endIdx > pos) {
-          final num = content.substring(pos + 1, endIdx);
-          notes.add('◆$num');
-          pos = endIdx + 1;
+        // Dash: could be empty column or separator after a note
+        if (result.isNotEmpty && result.last != '-') {
+          // Previous was a note - this dash is the separator, skip it
+          i++;
           continue;
         }
-      }
+        result.add('-');
+        i++;
+      } else if (RegExp(r'\d').hasMatch(char)) {
+        // Start of a numeric note - collect the full note
+        final noteBuffer = StringBuffer();
+        noteBuffer.write(char);
+        i++;
 
-      // Parse numbers with techniques
-      if (RegExp(r'\d').hasMatch(char)) {
-        String note = '';
-        // Read digits
-        while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-          note += content[pos];
-          pos++;
-        }
-        // Read technique modifiers and their targets
-        while (pos < content.length) {
-          // Check for bend with target FIRST (e.g., 2b3)
-          if (content[pos] == 'b' && pos + 1 < content.length && RegExp(r'\d').hasMatch(content[pos + 1])) {
-            note += content[pos];
-            pos++;
-            while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-              note += content[pos];
-              pos++;
-            }
-          } else if (content[pos] == '/' || content[pos] == '\\') {
-            note += content[pos];
-            pos++;
-            // Read target fret after slide
-            while (pos < content.length && RegExp(r'\d').hasMatch(content[pos])) {
-              note += content[pos];
-              pos++;
-            }
-          } else if (RegExp(r'[hpbt~]').hasMatch(content[pos])) {
-            // Simple technique without target
-            note += content[pos];
-            pos++;
+        // Continue collecting: digits, then optionally technique + more digits
+        while (i < content.length) {
+          final nextChar = content[i];
+          if (RegExp(r'[\dhpbt/\\~+]').hasMatch(nextChar)) {
+            noteBuffer.write(nextChar);
+            i++;
           } else {
             break;
           }
         }
-        notes.add(note);
-        continue;
-      }
-
-      // Parse mute
-      if (char == 'x' || char == 'X') {
-        notes.add(char);
-        pos++;
-        continue;
-      }
-
-      // Skip any other character
-      pos++;
-    }
-
-    return notes.isEmpty ? ['-'] : notes;
-  }
-
-  /// Parse a single column's content, extracting the note and ignoring padding
-  static String _parseColumnContent(String col) {
-    if (col.isEmpty) return '-';
-
-    // If it's all dashes, it's a dash column
-    if (RegExp(r'^-+$').hasMatch(col)) {
-      return '-';
-    }
-
-    // Find the actual note content (before trailing padding dashes)
-    int pos = 0;
-    String note = '';
-
-    // Parse harmonic ◆number (can be multi-digit like ◆12)
-    if (col.startsWith('◆')) {
-      note = '◆';
-      pos = 1;
-      // Read ALL digits after ◆
-      while (pos < col.length && RegExp(r'\d').hasMatch(col[pos])) {
-        note += col[pos];
-        pos++;
-      }
-      return note;
-    }
-
-    // Parse old-style harmonic <number>
-    if (col.startsWith('<')) {
-      final endIdx = col.indexOf('>');
-      if (endIdx > 0) {
-        return '◆${col.substring(1, endIdx)}';
-      }
-    }
-
-    // Parse number with optional techniques
-    if (RegExp(r'\d').hasMatch(col[0])) {
-      // Read digits
-      while (pos < col.length && RegExp(r'\d').hasMatch(col[pos])) {
-        note += col[pos];
-        pos++;
-      }
-
-      // Read technique modifiers
-      while (pos < col.length && RegExp(r'[hpbt/\\~]').hasMatch(col[pos])) {
-        note += col[pos];
-        pos++;
-        // For slides and bends, capture target fret
-        if (col[pos - 1] == '/' || col[pos - 1] == '\\' || col[pos - 1] == 'b') {
-          while (pos < col.length && RegExp(r'\d').hasMatch(col[pos])) {
-            note += col[pos];
-            pos++;
-          }
+        result.add(noteBuffer.toString());
+      } else if (RegExp(r'[hpbt/\\~+]').hasMatch(char)) {
+        // Technique or harmonic at start - collect it with following digits
+        // This allows standalone techniques like h3, /6, +12
+        final noteBuffer = StringBuffer();
+        noteBuffer.write(char);
+        i++;
+        while (i < content.length && RegExp(r'[\dhpbt/\\~+]').hasMatch(content[i])) {
+          noteBuffer.write(content[i]);
+          i++;
         }
+        result.add(noteBuffer.toString());
+      } else {
+        // Unknown character - skip
+        i++;
       }
-
-      return note.isNotEmpty ? note : '-';
     }
 
-    // Parse mute symbol
-    if (RegExp(r'[xX]').hasMatch(col[0])) {
-      return col[0];
-    }
-
-    // Default to dash if unrecognized
-    return '-';
+    return result;
   }
 }

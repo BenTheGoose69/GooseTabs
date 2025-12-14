@@ -52,7 +52,7 @@ class TechniqueToolbar extends StatelessWidget {
             _buildTechniqueButton('t', 'Tap', () => onTechniqueTap('t')),
             _buildTechniqueButton('/', 'Slide up', () => onSlideTap('/')),
             _buildTechniqueButton('\\', 'Slide down', () => onSlideTap('\\')),
-            _buildTechniqueButton('◆', 'Harmonic', onHarmonicTap),
+            _buildTechniqueButton('+', 'Harmonic', onHarmonicTap),
             _buildTechniqueButton('~', 'Vibrato', () => onTechniqueTap('~')),
             _buildDivider(context),
             TechniqueButton(label: '|', tooltip: 'Add bar', isWide: true, onTap: onBarLineTap),

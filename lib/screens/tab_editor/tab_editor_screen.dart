@@ -178,16 +178,16 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     }
 
     setState(() {
-      // Check if we should append digit to previous incomplete note (◆, b, /, \)
+      // Check if we should append digit to previous incomplete note
+      // Techniques that take target frets: h, p, b, t, /, \, +
       if (_cursorPosition > 0 && RegExp(r'^\d+$').hasMatch(note)) {
         int prevPos = _cursorPosition - 1;
         for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
           final bar = _currentSection.bars[barIdx];
           if (prevPos < bar.columns.length) {
             final prevNote = bar.getNote(prevPos, _selectedStringIndex);
-            // ◆ only allows ONE digit, so check it's exactly '◆'
-            // b, /, \ can have target frets appended
-            if (prevNote == '◆' || RegExp(r'[/\\b]$').hasMatch(prevNote)) {
+            // h, p, b, t, /, \, + can have target frets appended (e.g., 5h6, 3p2, 5b7, 6/7, +12, h3)
+            if (RegExp(r'[hpbt/\\+]$').hasMatch(prevNote)) {
               bar.setNote(prevPos, _selectedStringIndex, prevNote + note);
               _hasChanges = true;
               return;
@@ -202,7 +202,10 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
       int pos = _cursorPosition;
       for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
         final bar = _currentSection.bars[barIdx];
-        if (pos <= bar.columns.length) {
+        final isLastBar = barIdx == _currentSection.bars.length - 1;
+        // Only allow adding at end of bar if it's the last bar
+        // Otherwise, pos == bar.columns.length means start of next bar
+        if (pos < bar.columns.length || (isLastBar && pos == bar.columns.length)) {
           // Insert new column at this position
           final newCol = TabColumn(bar.stringCount);
           newCol.notes[_selectedStringIndex] = note;
@@ -228,25 +231,31 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
     _scheduleScrollToCursor();
   }
 
-  // Append technique symbol to the previous note (for h, p, b, t, ~, /, \)
+  // Append technique symbol to the previous note, or add as standalone column
   void _appendTechnique(String technique) {
-    if (_cursorPosition == 0) return; // Nothing to append to
-
     setState(() {
-      int prevPos = _cursorPosition - 1;
-      for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
-        final bar = _currentSection.bars[barIdx];
-        if (prevPos < bar.columns.length) {
-          final prevNote = bar.getNote(prevPos, _selectedStringIndex);
-          // Only append if previous note has a fret number
-          if (prevNote != '-' && RegExp(r'\d').hasMatch(prevNote)) {
-            bar.setNote(prevPos, _selectedStringIndex, prevNote + technique);
-            _hasChanges = true;
+      // Try to append to previous note if it has a fret number
+      if (_cursorPosition > 0) {
+        int prevPos = _cursorPosition - 1;
+        for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
+          final bar = _currentSection.bars[barIdx];
+          if (prevPos < bar.columns.length) {
+            final prevNote = bar.getNote(prevPos, _selectedStringIndex);
+            // Append if previous note has a fret number
+            if (prevNote != '-' && RegExp(r'\d').hasMatch(prevNote)) {
+              bar.setNote(prevPos, _selectedStringIndex, prevNote + technique);
+              _hasChanges = true;
+              return;
+            }
+            break;
           }
-          return;
+          prevPos -= bar.columns.length;
         }
-        prevPos -= bar.columns.length;
       }
+
+      // No previous note to append to - add technique as new column
+      // This allows standalone techniques like h3, /6, +12
+      _addNote(technique);
     });
   }
 
@@ -286,9 +295,12 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   void _addBarLine() {
     setState(() {
       int pos = _cursorPosition;
+      int columnsBeforeCursor = 0;
+
       for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
         final bar = _currentSection.bars[barIdx];
         if (pos < bar.columns.length) {
+          // Cursor is within this bar - split it
           final newBar = TabMeasure(stringCount: _currentSection.stringCount);
           while (pos < bar.columns.length) {
             newBar.columns.add(bar.columns.removeAt(pos));
@@ -296,16 +308,32 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
           if (bar.columns.isEmpty) bar.addColumn();
           if (newBar.columns.isEmpty) newBar.addColumn();
           _currentSection.bars.insert(barIdx + 1, newBar);
+          // Move cursor to start of new bar
+          _cursorPosition = columnsBeforeCursor + bar.columns.length;
+          _hasChanges = true;
+          return;
+        } else if (pos == bar.columns.length) {
+          // Cursor is at the end of this bar - insert new bar after it
+          final newBar = TabMeasure(stringCount: _currentSection.stringCount);
+          newBar.addColumn();
+          _currentSection.bars.insert(barIdx + 1, newBar);
+          // Move cursor to start of new bar
+          _cursorPosition = columnsBeforeCursor + bar.columns.length;
           _hasChanges = true;
           return;
         }
+        columnsBeforeCursor += bar.columns.length;
         pos -= bar.columns.length;
       }
+      // Fallback: add new bar at the end
       final newBar = TabMeasure(stringCount: _currentSection.stringCount);
       newBar.addColumn();
       _currentSection.bars.add(newBar);
+      // Move cursor to new bar
+      _cursorPosition = _getTotalColumns() - 1;
       _hasChanges = true;
     });
+    _scheduleScrollToCursor();
   }
 
   void _backspace() {
@@ -510,9 +538,9 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
                   if (!_chordMode) _chordNotes.clear();
                 });
               },
-              onTechniqueTap: _appendTechnique,  // h, p, b, t, ~ append to previous note
-              onSlideTap: _appendTechnique,      // /, \ append to previous note
-              onHarmonicTap: () => _addNote('◆'), // ◆ goes in own column
+              onTechniqueTap: _appendTechnique,  // h, p, b, t, ~ append to previous note or standalone
+              onSlideTap: _appendTechnique,      // /, \ append to previous note or standalone
+              onHarmonicTap: () => _appendTechnique('+'), // + appends to previous note or standalone
               onBarLineTap: _addBarLine,
               onDashTap: () => _addNote('-'),
             ),

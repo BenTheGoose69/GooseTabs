@@ -36,7 +36,9 @@
       "Bash(C:UsersBendiflutterbinflutter pub run flutter_launcher_icons)",
       "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat pub run flutter_launcher_icons\")",
       "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" pub run flutter_launcher_icons)",
-      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" clean)"
+      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" clean)",
+      "Bash(/c/Users/Bendi/flutter/bin/dart run:*)",
+      "Bash(/c/Users/Bendi/flutter/bin/flutter.bat run:*)"
     ]
   }
 }
