@@ -29,7 +29,7 @@ class AppBarAction extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: highlighted
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
                     : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -38,7 +38,7 @@ class AppBarAction extends StatelessWidget {
                 size: 20,
                 color: highlighted
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),

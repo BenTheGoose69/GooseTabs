@@ -29,7 +29,7 @@ class SectionMenuDialog {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(ctx).colorScheme.primary.withOpacity(0.15),
+                  color: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.label_outline, color: Theme.of(ctx).colorScheme.primary),
@@ -45,7 +45,7 @@ class SectionMenuDialog {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(ctx).colorScheme.secondary.withOpacity(0.15),
+                  color: Theme.of(ctx).colorScheme.secondary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.repeat, color: Theme.of(ctx).colorScheme.secondary),
@@ -62,7 +62,7 @@ class SectionMenuDialog {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(ctx).colorScheme.error.withOpacity(0.15),
+                    color: Theme.of(ctx).colorScheme.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.delete_outline, color: Theme.of(ctx).colorScheme.error),

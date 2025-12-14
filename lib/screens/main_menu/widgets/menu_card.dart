@@ -29,7 +29,7 @@ class MenuCard extends StatelessWidget {
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
             ),
           ),
           child: Row(
@@ -38,7 +38,7 @@ class MenuCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -58,7 +58,7 @@ class MenuCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                     ),
                   ],
@@ -67,7 +67,7 @@ class MenuCard extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
               ),
             ],
           ),

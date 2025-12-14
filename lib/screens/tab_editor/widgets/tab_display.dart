@@ -220,14 +220,14 @@ class _NoteColors {
     return _NoteColors(
       stringName: scheme.primary,
       barLine: scheme.outline,
-      dash: scheme.onSurface.withOpacity(0.3),
+      dash: scheme.onSurface.withValues(alpha: 0.3),
       fret: scheme.primary,
       technique: Colors.cyan,
       slide: Colors.orange,
       vibrato: Colors.purple,
       harmonic: Colors.tealAccent,
       repeat: scheme.secondary,
-      cursorBg: scheme.primary.withOpacity(0.3),
+      cursorBg: scheme.primary.withValues(alpha: 0.3),
     );
   }
 }
@@ -270,7 +270,7 @@ class _NavigationControls extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),

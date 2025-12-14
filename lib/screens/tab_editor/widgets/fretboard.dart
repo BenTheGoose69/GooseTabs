@@ -35,7 +35,7 @@ class Fretboard extends StatelessWidget {
         ),
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -94,7 +94,7 @@ class _TuningSettingsColumn extends StatelessWidget {
               child: Icon(
                 Icons.settings,
                 size: 16,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           );
@@ -140,7 +140,7 @@ class _StringLabelsColumn extends StatelessWidget {
                     ? LinearGradient(
                         colors: [
                           Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                         ],
                       )
                     : null,
@@ -156,7 +156,7 @@ class _StringLabelsColumn extends StatelessWidget {
                   fontSize: hasChordNote ? 11 : 14,
                   color: isSelected || hasChordNote
                       ? Colors.white
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -248,21 +248,21 @@ class _FretCell extends StatelessWidget {
         margin: const EdgeInsets.all(0.5),
         decoration: BoxDecoration(
           color: hasChordNote
-              ? Theme.of(context).colorScheme.secondary.withOpacity(0.2)
+              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2)
               : isSelectedRow
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
                   : isDeadNote
-                      ? Theme.of(context).colorScheme.error.withOpacity(0.08)
+                      ? Theme.of(context).colorScheme.error.withValues(alpha: 0.08)
                       : isMarkerFret
-                          ? Theme.of(context).colorScheme.secondary.withOpacity(0.08)
-                          : Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                          ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.08)
+                          : Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: hasChordNote
                 ? Theme.of(context).colorScheme.secondary
                 : isDeadNote
-                    ? Theme.of(context).colorScheme.error.withOpacity(0.3)
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    ? Theme.of(context).colorScheme.error.withValues(alpha: 0.3)
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
             width: hasChordNote ? 1.5 : 0.5,
           ),
         ),
@@ -278,7 +278,7 @@ class _FretCell extends StatelessWidget {
                     ? Theme.of(context).colorScheme.error
                     : isSelectedRow
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ),

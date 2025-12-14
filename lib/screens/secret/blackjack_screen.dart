@@ -83,7 +83,6 @@ class _BlackjackScreenState extends State<BlackjackScreen> with TickerProviderSt
 
   int _chips = 1000;
   int _currentBet = 0;
-  int _selectedBetAmount = 25;
 
   bool _gameInProgress = false;
   bool _playerTurn = false;
@@ -334,11 +333,11 @@ class _BlackjackScreenState extends State<BlackjackScreen> with TickerProviderSt
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 decoration: BoxDecoration(
-                  color: _resultColor.withOpacity(0.9),
+                  color: _resultColor.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: _resultColor.withOpacity(0.5),
+                      color: _resultColor.withValues(alpha: 0.5),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -388,7 +387,7 @@ class _BlackjackScreenState extends State<BlackjackScreen> with TickerProviderSt
         Text(
           '$label${hand.isNotEmpty ? " - $value" : ""}',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -400,7 +399,7 @@ class _BlackjackScreenState extends State<BlackjackScreen> with TickerProviderSt
               ? Center(
                   child: Text(
                     isDealer ? 'Dealer\'s cards' : 'Your cards',
-                    style: TextStyle(color: Colors.white.withOpacity(0.3)),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
                   ),
                 )
               : _buildCardRow(hand),
@@ -447,7 +446,7 @@ class _BlackjackScreenState extends State<BlackjackScreen> with TickerProviderSt
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(2, 4),
           ),
@@ -626,7 +625,7 @@ class _BlackjackScreenState extends State<BlackjackScreen> with TickerProviderSt
           border: Border.all(color: Colors.white, width: 3),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.5),
+              color: color.withValues(alpha: 0.5),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

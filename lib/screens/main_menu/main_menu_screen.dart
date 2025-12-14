@@ -87,6 +87,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     final tab = await StorageService.importTabFromFile();
     if (tab != null && context.mounted) {
       await StorageService.saveTab(tab);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Imported "${tab.songName}"'),
@@ -189,7 +190,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             Text(
               'The Tab Writer',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
             ),
           ],
@@ -204,15 +205,15 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.15),
-            Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -236,7 +237,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               Text(
                 'Saved tabs',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
               ),
             ],
@@ -250,7 +251,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return Text(
       'Quick Actions',
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             fontWeight: FontWeight.w600,
             letterSpacing: 1,
           ),
@@ -292,7 +293,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       child: Text(
         'Made for musicians',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             ),
       ),
     );

@@ -31,7 +31,7 @@ class TechniqueToolbar extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -76,7 +76,7 @@ class TechniqueToolbar extends StatelessWidget {
       width: 1,
       height: 32,
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
     );
   }
 }
@@ -112,7 +112,7 @@ class _ChordModeButton extends StatelessWidget {
               border: Border.all(
                 color: isActive
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -122,7 +122,7 @@ class _ChordModeButton extends StatelessWidget {
                   size: 16,
                   color: isActive
                       ? Colors.black
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -134,7 +134,7 @@ class _ChordModeButton extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: isActive
                         ? Colors.black
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],

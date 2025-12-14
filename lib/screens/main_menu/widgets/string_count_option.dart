@@ -27,7 +27,7 @@ class StringCountOption extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
         ),

@@ -84,7 +84,7 @@ class _TuningDialogContentState extends State<_TuningDialogContent> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.2),
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.music_note, color: theme.colorScheme.primary),
@@ -102,7 +102,7 @@ class _TuningDialogContentState extends State<_TuningDialogContent> {
             Text(
               'Current: ${widget.currentTuning}',
               style: TextStyle(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 12),

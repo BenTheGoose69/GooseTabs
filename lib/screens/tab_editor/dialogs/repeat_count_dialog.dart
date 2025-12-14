@@ -59,7 +59,7 @@ class _RepeatCountDialogContentState extends State<_RepeatCountDialogContent> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.secondary.withOpacity(0.2),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(Icons.repeat, color: theme.colorScheme.secondary),

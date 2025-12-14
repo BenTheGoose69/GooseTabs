@@ -187,7 +187,7 @@ class TabViewerScreen extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -201,7 +201,7 @@ class TabViewerScreen extends StatelessWidget {
                     width: 1,
                     height: 32,
                     margin: const EdgeInsets.symmetric(horizontal: 16),
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                   ),
                   DateInfo(
                     icon: Icons.edit_outlined,
@@ -242,13 +242,13 @@ class TabViewerScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                            Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -275,7 +275,7 @@ class TabViewerScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+                          color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -307,7 +307,7 @@ class TabViewerScreen extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
               child: SingleChildScrollView(
@@ -346,7 +346,7 @@ class TabViewerScreen extends StatelessWidget {
     // Colors
     final stringNameColor = scheme.primary;
     final barLineColor = scheme.outline;
-    final dashColor = scheme.onSurface.withOpacity(0.3);
+    final dashColor = scheme.onSurface.withValues(alpha: 0.3);
     final fretColor = scheme.primary;
     const techniqueColor = Colors.cyan;
     const slideColor = Colors.orange;
@@ -448,7 +448,7 @@ class TabViewerScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -477,7 +477,7 @@ class TabViewerScreen extends StatelessWidget {
                           color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -489,8 +489,8 @@ class TabViewerScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                                    Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                                    Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(8),
@@ -510,7 +510,7 @@ class TabViewerScreen extends StatelessWidget {
                             Text(
                               e.value,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                               ),
                             ),
                           ],

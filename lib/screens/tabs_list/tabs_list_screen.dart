@@ -123,7 +123,7 @@ class _TabsListScreenState extends State<TabsListScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
@@ -143,7 +143,7 @@ class _TabsListScreenState extends State<TabsListScreen> {
           Text(
             'Create your first tab to get started',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
           ),
         ],
@@ -191,7 +191,7 @@ class _TabsListScreenState extends State<TabsListScreen> {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.6),
+                                .withValues(alpha: 0.6),
                           ),
                     ),
                   )

@@ -21,7 +21,7 @@ class SectionOptions extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
         ),
       ),
       child: Row(
@@ -62,7 +62,7 @@ class _LabelButton extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -75,7 +75,7 @@ class _LabelButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: label == null
-                      ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
+                      ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)
                       : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
@@ -106,13 +106,13 @@ class _RepeatButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isActive
-              ? Theme.of(context).colorScheme.secondary.withOpacity(0.15)
+              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isActive
-                ? Theme.of(context).colorScheme.secondary.withOpacity(0.5)
-                : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5)
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -123,7 +123,7 @@ class _RepeatButton extends StatelessWidget {
               size: 18,
               color: isActive
                   ? Theme.of(context).colorScheme.secondary
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             const SizedBox(width: 8),
             Text(
@@ -132,7 +132,7 @@ class _RepeatButton extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: isActive
                     ? Theme.of(context).colorScheme.secondary
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],

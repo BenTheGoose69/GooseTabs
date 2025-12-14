@@ -101,7 +101,7 @@ class TabCard extends StatelessWidget {
               Text(
                 _getInstrument(),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                     ),
               ),
             ],
@@ -110,7 +110,7 @@ class TabCard extends StatelessWidget {
         PopupMenuButton<String>(
           icon: Icon(
             Icons.more_vert,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           onSelected: (value) {
             if (value == 'view') onView();
@@ -158,7 +158,7 @@ class TabCard extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: SingleChildScrollView(
@@ -187,7 +187,7 @@ class TabCard extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 11,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       );
                     },
@@ -210,13 +210,13 @@ class TabCard extends StatelessWidget {
             Icon(
               Icons.access_time,
               size: 14,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
             const SizedBox(width: 4),
             Text(
               _formatDate(tab.modifiedAt),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
             ),
           ],

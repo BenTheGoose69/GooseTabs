@@ -30,7 +30,7 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   int _selectedStringIndex = 0;
   int _cursorPosition = 0;
   bool _chordMode = false;
-  Map<int, String> _chordNotes = {};
+  final Map<int, String> _chordNotes = {};
   final ScrollController _tabScrollController = ScrollController();
 
   @override

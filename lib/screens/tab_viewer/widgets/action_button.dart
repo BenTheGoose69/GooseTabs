@@ -32,7 +32,7 @@ class ActionButton extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 20,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),

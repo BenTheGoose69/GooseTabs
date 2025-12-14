@@ -20,7 +20,7 @@ class DateInfo extends StatelessWidget {
           Icon(
             icon,
             size: 16,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           const SizedBox(width: 8),
           Column(
@@ -30,7 +30,7 @@ class DateInfo extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               Text(
@@ -38,7 +38,7 @@ class DateInfo extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                 ),
               ),
             ],

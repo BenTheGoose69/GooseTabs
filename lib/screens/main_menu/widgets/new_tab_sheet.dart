@@ -123,7 +123,7 @@ class _NewTabSheetState extends State<NewTabSheet> {
             Text(
               'Instrument',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
             ),
             const SizedBox(height: 8),
@@ -159,7 +159,7 @@ class _NewTabSheetState extends State<NewTabSheet> {
             Text(
               'Strings',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
             ),
             const SizedBox(height: 8),

@@ -29,7 +29,7 @@ class InstrumentOption extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -39,7 +39,7 @@ class InstrumentOption extends StatelessWidget {
               icon,
               color: isSelected
                   ? Colors.black
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 8),
             Text(

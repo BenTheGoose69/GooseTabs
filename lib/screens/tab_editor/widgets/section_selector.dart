@@ -25,7 +25,7 @@ class SectionSelector extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
       ),
@@ -75,7 +75,7 @@ class _AddSectionButton extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                 width: 2,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
@@ -137,7 +137,7 @@ class _SectionChip extends StatelessWidget {
               border: isSelected
                   ? null
                   : Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                     ),
             ),
             alignment: Alignment.center,

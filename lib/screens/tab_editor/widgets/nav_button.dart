@@ -24,13 +24,13 @@ class NavButton extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color: isDestructive
-                ? Theme.of(context).colorScheme.error.withOpacity(0.1)
+                ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isDestructive
-                  ? Theme.of(context).colorScheme.error.withOpacity(0.3)
-                  : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  ? Theme.of(context).colorScheme.error.withValues(alpha: 0.3)
+                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: Icon(
@@ -38,7 +38,7 @@ class NavButton extends StatelessWidget {
             size: 20,
             color: isDestructive
                 ? Theme.of(context).colorScheme.error
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ),

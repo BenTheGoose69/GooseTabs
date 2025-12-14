@@ -60,7 +60,7 @@ class EditorAppBar extends StatelessWidget implements PreferredSizeWidget {
                     tuning,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -70,7 +70,7 @@ class EditorAppBar extends StatelessWidget implements PreferredSizeWidget {
             Icon(
               Icons.edit_outlined,
               size: 16,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ],
         ),
