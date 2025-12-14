@@ -38,7 +38,10 @@
       "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" pub run flutter_launcher_icons)",
       "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" clean)",
       "Bash(/c/Users/Bendi/flutter/bin/dart run:*)",
-      "Bash(/c/Users/Bendi/flutter/bin/flutter.bat run:*)"
+      "Bash(/c/Users/Bendi/flutter/bin/flutter.bat run:*)",
+      "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter analyze\")",
+      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze:*)",
+      "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''\")"
     ]
   }
 }

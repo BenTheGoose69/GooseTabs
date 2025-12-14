@@ -417,11 +417,11 @@ class GuitarTab {
       }
     }
 
-    // Parse each bar - SIMPLE: each character position = one column
+    // Parse each bar - parse all strings together to maintain alignment
     for (final barContent in barContents) {
       final bar = TabMeasure(stringCount: stringNames.length);
 
-      // Find the longest string content to determine number of columns
+      // Find the longest string content
       int maxLen = 0;
       for (final content in barContent) {
         if (content.length > maxLen) maxLen = content.length;
@@ -433,27 +433,62 @@ class GuitarTab {
         continue;
       }
 
-      // Parse each string content, grouping multi-character notes together
-      final parsedStrings = <List<String>>[];
-      for (final content in barContent) {
-        parsedStrings.add(_parseStringContent(content));
-      }
-
-      // Find max columns
-      int maxCols = 0;
-      for (final parsed in parsedStrings) {
-        if (parsed.length > maxCols) maxCols = parsed.length;
-      }
-
-      // Create columns
-      for (int colIdx = 0; colIdx < maxCols; colIdx++) {
-        final column = TabColumn(stringNames.length);
-        for (int stringIdx = 0; stringIdx < parsedStrings.length; stringIdx++) {
-          if (colIdx < parsedStrings[stringIdx].length) {
-            column.notes[stringIdx] = parsedStrings[stringIdx][colIdx];
+      // Parse all strings together, tracking positions for proper alignment
+      int pos = 0;
+      while (pos < maxLen) {
+        // Check what's at this position across all strings
+        bool anyNonDash = false;
+        for (final content in barContent) {
+          if (pos < content.length && content[pos] != '-') {
+            anyNonDash = true;
+            break;
           }
         }
-        bar.columns.add(column);
+
+        if (anyNonDash) {
+          // At least one string has a note at this position - extract notes from all
+          final column = TabColumn(stringNames.length);
+          int maxNoteLen = 1;
+
+          for (int stringIdx = 0; stringIdx < barContent.length; stringIdx++) {
+            final content = barContent[stringIdx];
+            if (pos < content.length && content[pos] != '-') {
+              // Extract the note starting at this position
+              final note = _extractNoteAt(content, pos);
+              column.notes[stringIdx] = note;
+              if (note.length > maxNoteLen) maxNoteLen = note.length;
+            }
+            // else: leave as default '-'
+          }
+
+          bar.columns.add(column);
+          // Move past the note (maxNoteLen) and its separator dash (+1)
+          pos += maxNoteLen + 1;
+        } else {
+          // All strings have dash at this position - could be empty column or separator
+          // Check if next position also has all dashes
+          if (pos + 1 < maxLen) {
+            bool nextAlsoDash = true;
+            for (final content in barContent) {
+              if (pos + 1 < content.length && content[pos + 1] != '-') {
+                nextAlsoDash = false;
+                break;
+              }
+            }
+
+            if (nextAlsoDash) {
+              // Empty column (dash) followed by separator (dash) - add empty column
+              bar.columns.add(TabColumn(stringNames.length));
+              pos += 2;
+            } else {
+              // Next position has a note, so this is a separator - skip it
+              pos++;
+            }
+          } else {
+            // At the end - skip trailing separator
+            pos++;
+          }
+        }
       }
 
       if (bar.columns.isEmpty) {
@@ -470,57 +505,29 @@ class GuitarTab {
     return section;
   }
 
-  /// Smart parsing: group multi-character notes together (e.g., 5h6, 12, +9, h3, /6)
-  static List<String> _parseStringContent(String content) {
-    final result = <String>[];
-    int i = 0;
+  /// Extract a note starting at position [start] in [content]
+  /// Returns the full note (e.g., '5h6', '/5', '3+', '12') or '-' if empty
+  static String _extractNoteAt(String content, int start) {
+    if (start >= content.length || content[start] == '-') {
+      return '-';
+    }
+
+    final buffer = StringBuffer();
+    int i = start;
 
     while (i < content.length) {
       final char = content[i];
+      if (char == '-') break; // End of note (separator dash)
 
-      if (char == '-') {
-        // Dash: could be empty column or separator after a note
-        if (result.isNotEmpty && result.last != '-') {
-          // Previous was a note - this dash is the separator, skip it
-          i++;
-          continue;
-        }
-        result.add('-');
+      // Valid note characters: digits and technique symbols
+      if (RegExp(r'[\dhpbt/\\~+]').hasMatch(char)) {
+        buffer.write(char);
         i++;
-      } else if (RegExp(r'\d').hasMatch(char)) {
-        // Start of a numeric note - collect the full note
-        final noteBuffer = StringBuffer();
-        noteBuffer.write(char);
-        i++;
-
-        // Continue collecting: digits, then optionally technique + more digits
-        while (i < content.length) {
-          final nextChar = content[i];
-          if (RegExp(r'[\dhpbt/\\~+]').hasMatch(nextChar)) {
-            noteBuffer.write(nextChar);
-            i++;
-          } else {
-            break;
-          }
-        }
-        result.add(noteBuffer.toString());
-      } else if (RegExp(r'[hpbt/\\~+]').hasMatch(char)) {
-        // Technique or harmonic at start - collect it with following digits
-        // This allows standalone techniques like h3, /6, +12
-        final noteBuffer = StringBuffer();
-        noteBuffer.write(char);
-        i++;
-        while (i < content.length && RegExp(r'[\dhpbt/\\~+]').hasMatch(content[i])) {
-          noteBuffer.write(content[i]);
-          i++;
-        }
-        result.add(noteBuffer.toString());
       } else {
-        // Unknown character - skip
-        i++;
+        break;
       }
     }
 
-    return result;
+    return buffer.isEmpty ? '-' : buffer.toString();
   }
 }
