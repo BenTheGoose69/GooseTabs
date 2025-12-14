@@ -16,15 +16,30 @@ class TabCard extends StatelessWidget {
   });
 
   String _getTabPreview(TabSection section, int stringIndex) {
-    if (section.bars.isEmpty) return '----------';
-    final bar = section.bars.first;
+    if (section.bars.isEmpty) return '|';
+
     String preview = '';
-    for (int i = 0; i < bar.columns.length && preview.length < 20; i++) {
-      if (stringIndex < bar.columns[i].notes.length) {
-        preview += bar.columns[i].notes[stringIndex];
+    // Show all bars in the section
+    for (final bar in section.bars) {
+      for (int i = 0; i < bar.columns.length; i++) {
+        final column = bar.columns[i];
+        final columnWidth = column.width;
+
+        String note = '-';
+        if (stringIndex < column.notes.length) {
+          note = column.notes[stringIndex];
+        }
+
+        // Pad note to column width
+        while (note.length < columnWidth) {
+          note += '-';
+        }
+        preview += note;
+        preview += '-'; // Separator dash
       }
+      preview += '|'; // Bar line
     }
-    return preview.isEmpty ? '----------' : preview;
+    return preview;
   }
 
   String _formatDate(DateTime date) {
@@ -146,21 +161,24 @@ class TabCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(
-              tab.sections.first.stringCount,
-              (i) {
-                final section = tab.sections.first;
-                return Text(
-                  '${section.stringNames[i]}|${_getTabPreview(section, i)}',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                );
-              },
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(
+                tab.sections.first.stringCount,
+                (i) {
+                  final section = tab.sections.first;
+                  return Text(
+                    '${section.stringNames[i]}|${_getTabPreview(section, i)}',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
