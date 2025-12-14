@@ -43,7 +43,8 @@
       "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze:*)",
       "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''\")",
       "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\tabs_list\\tabs_list_screen.dart''\")",
-      "Bash(\"C:/Users/Bendi/flutter/bin/flutter.bat\" analyze)"
+      "Bash(\"C:/Users/Bendi/flutter/bin/flutter.bat\" analyze)",
+      "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" analyze lib/screens/secret)"
     ]
   }
 }
