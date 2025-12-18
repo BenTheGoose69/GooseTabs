@@ -130,6 +130,70 @@ class StorageService {
     return tab.toTabFormat();
   }
 
+  static Future<String?> exportTabToFileWithStructure(GuitarTab tab, String customStructure) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName =
+          '${tab.songName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}_tab.txt';
+      final file = File('${directory.path}/$fileName');
+
+      await file.writeAsString(tab.toTabFormatWithStructure(customStructure));
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: '${tab.songName} - Guitar Tab',
+      );
+
+      return file.path;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<String?> downloadTabToDownloadsWithStructure(GuitarTab tab, String customStructure) async {
+    try {
+      final fileName =
+          '${tab.songName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}_tab.txt';
+
+      // Try to get the Downloads directory
+      Directory? downloadsDir;
+
+      if (Platform.isAndroid) {
+        // On Android, use the public Downloads folder
+        downloadsDir = Directory('/storage/emulated/0/Download');
+        if (!await downloadsDir.exists()) {
+          // Fallback to external storage
+          final extDir = await getExternalStorageDirectory();
+          if (extDir != null) {
+            downloadsDir = Directory('${extDir.path}/Download');
+            await downloadsDir.create(recursive: true);
+          }
+        }
+      } else if (Platform.isIOS) {
+        // On iOS, use the documents directory (accessible via Files app)
+        downloadsDir = await getApplicationDocumentsDirectory();
+      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        // On desktop, find the Downloads folder
+        final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+        if (home != null) {
+          downloadsDir = Directory('$home/Downloads');
+        }
+      }
+
+      if (downloadsDir == null || !await downloadsDir.exists()) {
+        // Final fallback to documents directory
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      final file = File('${downloadsDir.path}/$fileName');
+      await file.writeAsString(tab.toTabFormatWithStructure(customStructure));
+
+      return file.path;
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<GuitarTab?> importTabFromFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(

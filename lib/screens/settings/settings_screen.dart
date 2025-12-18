@@ -83,35 +83,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showFretCountDialog() {
-    final fretCounts = [19, 20, 21, 22, 24];
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Default Fret Count'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: fretCounts.map((count) {
-            final isSelected = settingsService.defaultFretCount == count;
-            return ListTile(
-              title: Text('$count frets'),
-              trailing: isSelected
-                  ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
-                  : null,
-              onTap: () {
-                settingsService.setDefaultFretCount(count);
-                if (settingsService.hapticFeedback) {
-                  HapticFeedback.lightImpact();
-                }
-                Navigator.pop(context);
-              },
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
   void _showInstrumentDialog() {
     showDialog(
       context: context,
@@ -143,11 +114,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : null,
       onTap: () {
         settingsService.setDefaultInstrument(instrument);
+        // Auto-set default strings when changing instrument
+        if (instrument == 'bass' && settingsService.defaultStrings > 5) {
+          settingsService.setDefaultStrings(4);
+        } else if (instrument == 'guitar' && settingsService.defaultStrings < 6) {
+          settingsService.setDefaultStrings(6);
+        }
         if (settingsService.hapticFeedback) {
           HapticFeedback.lightImpact();
         }
         Navigator.pop(context);
       },
+    );
+  }
+
+  void _showStringsDialog() {
+    final isGuitar = settingsService.defaultInstrument == 'guitar';
+    final stringOptions = isGuitar ? [6, 7, 8] : [4, 5, 6];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Default Strings'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: stringOptions.map((count) {
+            final isSelected = settingsService.defaultStrings == count;
+            return ListTile(
+              title: Text('$count strings'),
+              trailing: isSelected
+                  ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                  : null,
+              onTap: () {
+                settingsService.setDefaultStrings(count);
+                if (settingsService.hapticFeedback) {
+                  HapticFeedback.lightImpact();
+                }
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -234,13 +242,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'EDITOR DEFAULTS',
               children: [
                 SettingsTile(
-                  icon: Icons.straighten_outlined,
-                  title: 'Default Fret Count',
-                  subtitle: '${settingsService.defaultFretCount} frets',
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _showFretCountDialog,
-                ),
-                SettingsTile(
                   icon: Icons.music_note_outlined,
                   title: 'Default Instrument',
                   subtitle: settingsService.defaultInstrument == 'guitar'
@@ -250,18 +251,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: _showInstrumentDialog,
                 ),
                 SettingsTile(
-                  icon: Icons.numbers_outlined,
-                  title: 'Show Fret Numbers',
-                  subtitle: 'Display fret numbers on fretboard',
-                  trailing: Switch(
-                    value: settingsService.showFretNumbers,
-                    onChanged: (value) {
-                      settingsService.setShowFretNumbers(value);
-                      if (settingsService.hapticFeedback) {
-                        HapticFeedback.lightImpact();
-                      }
-                    },
-                  ),
+                  icon: Icons.linear_scale_outlined,
+                  title: 'Default Strings',
+                  subtitle: '${settingsService.defaultStrings} strings',
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _showStringsDialog,
                   showDivider: false,
                 ),
               ],

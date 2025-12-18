@@ -47,7 +47,11 @@
       "Bash(\"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat\" analyze lib/screens/secret)",
       "Bash(C:UsersBendiflutterbinflutter analyze libscreensmain_menumain_menu_screen.dart libscreenstabs_listtabs_list_screen.dart)",
       "Bash(C:UsersBendiflutterbinflutter.bat analyze \"C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\main_menu\\main_menu_screen.dart\" \"C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\tabs_list\\tabs_list_screen.dart\")",
-      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\":*)"
+      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\":*)",
+      "Bash(C:UsersBendiflutterbinflutter analyze lib/screens/tab_viewer/tab_viewer_screen.dart lib/models/tab_model.dart)",
+      "Bash(C:/Users/Bendi/flutter/bin/flutter.bat analyze:*)",
+      "Bash(cmd /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter pub get\")",
+      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat clean\")"
     ]
   }
 }

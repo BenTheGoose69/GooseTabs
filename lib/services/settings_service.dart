@@ -21,27 +21,24 @@ enum ColorSchemeType {
 class SettingsService extends ChangeNotifier {
   static const String _colorSchemeKey = 'color_scheme';
   static const String _themeModeKey = 'theme_mode';
-  static const String _defaultFretCountKey = 'default_fret_count';
   static const String _defaultInstrumentKey = 'default_instrument';
+  static const String _defaultStringsKey = 'default_strings';
   static const String _hapticFeedbackKey = 'haptic_feedback';
   static const String _autoSaveKey = 'auto_save';
-  static const String _showFretNumbersKey = 'show_fret_numbers';
 
   ColorSchemeType _colorScheme = ColorSchemeType.orange;
   ThemeMode _themeMode = ThemeMode.dark;
-  int _defaultFretCount = 22;
   String _defaultInstrument = 'guitar';
+  int _defaultStrings = 6;
   bool _hapticFeedback = true;
   bool _autoSave = true;
-  bool _showFretNumbers = true;
 
   ColorSchemeType get colorScheme => _colorScheme;
   ThemeMode get themeMode => _themeMode;
-  int get defaultFretCount => _defaultFretCount;
   String get defaultInstrument => _defaultInstrument;
+  int get defaultStrings => _defaultStrings;
   bool get hapticFeedback => _hapticFeedback;
   bool get autoSave => _autoSave;
-  bool get showFretNumbers => _showFretNumbers;
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -52,11 +49,10 @@ class SettingsService extends ChangeNotifier {
     final themeModeIndex = prefs.getInt(_themeModeKey) ?? 2; // Default to dark
     _themeMode = ThemeMode.values[themeModeIndex.clamp(0, ThemeMode.values.length - 1)];
 
-    _defaultFretCount = prefs.getInt(_defaultFretCountKey) ?? 22;
     _defaultInstrument = prefs.getString(_defaultInstrumentKey) ?? 'guitar';
+    _defaultStrings = prefs.getInt(_defaultStringsKey) ?? (_defaultInstrument == 'bass' ? 4 : 6);
     _hapticFeedback = prefs.getBool(_hapticFeedbackKey) ?? true;
     _autoSave = prefs.getBool(_autoSaveKey) ?? true;
-    _showFretNumbers = prefs.getBool(_showFretNumbersKey) ?? true;
 
     notifyListeners();
   }
@@ -75,17 +71,17 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setDefaultFretCount(int count) async {
-    _defaultFretCount = count;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_defaultFretCountKey, count);
-    notifyListeners();
-  }
-
   Future<void> setDefaultInstrument(String instrument) async {
     _defaultInstrument = instrument;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_defaultInstrumentKey, instrument);
+    notifyListeners();
+  }
+
+  Future<void> setDefaultStrings(int strings) async {
+    _defaultStrings = strings;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_defaultStringsKey, strings);
     notifyListeners();
   }
 
@@ -100,13 +96,6 @@ class SettingsService extends ChangeNotifier {
     _autoSave = enabled;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_autoSaveKey, enabled);
-    notifyListeners();
-  }
-
-  Future<void> setShowFretNumbers(bool show) async {
-    _showFretNumbers = show;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_showFretNumbersKey, show);
     notifyListeners();
   }
 }

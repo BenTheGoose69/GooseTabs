@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../services/storage_service.dart';
 import '../tab_editor/tab_editor_screen.dart';
 import '../tabs_list/tabs_list_screen.dart';
@@ -17,10 +18,21 @@ class MainMenuScreen extends StatefulWidget {
 class _MainMenuScreenState extends State<MainMenuScreen> {
   int _secretTapCount = 0;
   DateTime? _lastTapTime;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void _playHonk() {
+    _audioPlayer.play(AssetSource('sounds/honk.mp3'));
   }
 
   void _onSecretTap() {
@@ -160,21 +172,24 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-              width: 2,
+        GestureDetector(
+          onTap: _playHonk,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.asset(
-              'assets/icon/GooseTabsFinal.png',
-              fit: BoxFit.cover,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.asset(
+                'assets/icon/GooseTabsFinal.png',
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ),

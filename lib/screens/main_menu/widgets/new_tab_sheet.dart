@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../main.dart';
 import '../../../models/tab_model.dart';
 import '../../../services/storage_service.dart';
 import 'instrument_option.dart';
@@ -15,8 +16,16 @@ class NewTabSheet extends StatefulWidget {
 
 class _NewTabSheetState extends State<NewTabSheet> {
   final _songNameController = TextEditingController();
-  String _instrument = 'Guitar';
-  int _stringCount = 6;
+  late String _instrument;
+  late int _stringCount;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use settings defaults
+    _instrument = settingsService.defaultInstrument == 'guitar' ? 'Guitar' : 'Bass';
+    _stringCount = settingsService.defaultStrings;
+  }
 
   @override
   void dispose() {
@@ -25,7 +34,10 @@ class _NewTabSheetState extends State<NewTabSheet> {
   }
 
   List<String> _getDefaultStrings() {
-    if (_instrument == 'Bass') {
+    if (_instrument == 'Custom') {
+      // All strings default to E for custom
+      return List.filled(_stringCount, 'E');
+    } else if (_instrument == 'Bass') {
       if (_stringCount == 4) return ['G', 'D', 'A', 'E'];
       if (_stringCount == 5) return ['G', 'D', 'A', 'E', 'B'];
       return ['C', 'G', 'D', 'A', 'E', 'B'];
@@ -74,6 +86,8 @@ class _NewTabSheetState extends State<NewTabSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isCustom = _instrument == 'Custom';
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -136,7 +150,7 @@ class _NewTabSheetState extends State<NewTabSheet> {
                     isSelected: _instrument == 'Guitar',
                     onTap: () => setState(() {
                       _instrument = 'Guitar';
-                      if (_stringCount < 6) _stringCount = 6;
+                      if (_stringCount < 6 || _stringCount > 8) _stringCount = 6;
                     }),
                   ),
                 ),
@@ -148,8 +162,20 @@ class _NewTabSheetState extends State<NewTabSheet> {
                     isSelected: _instrument == 'Bass',
                     onTap: () => setState(() {
                       _instrument = 'Bass';
-                      if (_stringCount > 6) _stringCount = 4;
+                      if (_stringCount > 6 || _stringCount < 4) _stringCount = 4;
                       if (_stringCount == 6) _stringCount = 4;
+                    }),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InstrumentOption(
+                    label: 'Custom',
+                    icon: Icons.tune,
+                    isSelected: _instrument == 'Custom',
+                    onTap: () => setState(() {
+                      _instrument = 'Custom';
+                      // Keep current string count for custom
                     }),
                   ),
                 ),
@@ -163,20 +189,62 @@ class _NewTabSheetState extends State<NewTabSheet> {
                   ),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: _getStringOptions().map((count) {
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: StringCountOption(
-                      count: count,
-                      isSelected: _stringCount == count,
-                      onTap: () => setState(() => _stringCount = count),
+            if (isCustom) ...[
+              // Slider for custom instrument
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: _stringCount.toDouble(),
+                      min: 1,
+                      max: 10,
+                      divisions: 9,
+                      label: '$_stringCount',
+                      onChanged: (value) => setState(() {
+                        _stringCount = value.round();
+                      }),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$_stringCount',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              // Button options for Guitar/Bass
+              Row(
+                children: _getStringOptions().map((count) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: StringCountOption(
+                        count: count,
+                        isSelected: _stringCount == count,
+                        onTap: () => setState(() => _stringCount = count),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
