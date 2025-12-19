@@ -337,9 +337,9 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
   }
 
   void _backspace() {
-    if (_cursorPosition > 0) {
+    final totalCols = _getTotalColumns();
+    if (_cursorPosition < totalCols) {
       setState(() {
-        _cursorPosition--;
         int pos = _cursorPosition;
         int columnsBeforeBar = 0;
         for (int barIdx = 0; barIdx < _currentSection.bars.length; barIdx++) {
@@ -349,26 +349,20 @@ class _TabEditorScreenState extends State<TabEditorScreen> {
             if (bar.columns.isEmpty) {
               if (_currentSection.bars.length > 1) {
                 _currentSection.bars.removeAt(barIdx);
-                if (_cursorPosition > columnsBeforeBar && barIdx > 0) {
-                  _cursorPosition = columnsBeforeBar;
-                }
+                _cursorPosition = columnsBeforeBar;
               } else {
                 bar.addColumn();
               }
+            }
+            // Adjust cursor if we're past the end after deletion
+            if (_cursorPosition > _getTotalColumns()) {
+              _cursorPosition = _getTotalColumns();
             }
             _hasChanges = true;
             return;
           }
           columnsBeforeBar += bar.columns.length;
           pos -= bar.columns.length;
-        }
-      });
-    } else if (_cursorPosition == 0 && _currentSection.bars.length > 1) {
-      setState(() {
-        if (_currentSection.bars[0].columns.length == 1 &&
-            _currentSection.bars[0].columns[0].isEmpty) {
-          _currentSection.bars.removeAt(0);
-          _hasChanges = true;
         }
       });
     }
