@@ -93,6 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             _buildInstrumentOption('guitar', 'Guitar', Icons.music_note),
             _buildInstrumentOption('bass', 'Bass', Icons.music_note_outlined),
+            _buildInstrumentOption('custom', 'Custom', Icons.tune),
           ],
         ),
       ),
@@ -119,6 +120,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           settingsService.setDefaultStrings(4);
         } else if (instrument == 'guitar' && settingsService.defaultStrings < 6) {
           settingsService.setDefaultStrings(6);
+        } else if (instrument == 'custom') {
+          // Keep current string count or default to 6
+          if (settingsService.defaultStrings < 1 || settingsService.defaultStrings > 10) {
+            settingsService.setDefaultStrings(6);
+          }
         }
         if (settingsService.hapticFeedback) {
           HapticFeedback.lightImpact();
@@ -129,31 +135,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showStringsDialog() {
-    final isGuitar = settingsService.defaultInstrument == 'guitar';
-    final stringOptions = isGuitar ? [6, 7, 8] : [4, 5, 6];
+    final instrument = settingsService.defaultInstrument;
+    final List<int> stringOptions;
+
+    if (instrument == 'custom') {
+      stringOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    } else if (instrument == 'bass') {
+      stringOptions = [4, 5, 6];
+    } else {
+      stringOptions = [6, 7, 8];
+    }
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Default Strings'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: stringOptions.map((count) {
-            final isSelected = settingsService.defaultStrings == count;
-            return ListTile(
-              title: Text('$count strings'),
-              trailing: isSelected
-                  ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
-                  : null,
-              onTap: () {
-                settingsService.setDefaultStrings(count);
-                if (settingsService.hapticFeedback) {
-                  HapticFeedback.lightImpact();
-                }
-                Navigator.pop(context);
-              },
-            );
-          }).toList(),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: stringOptions.map((count) {
+              final isSelected = settingsService.defaultStrings == count;
+              return ListTile(
+                title: Text('$count strings'),
+                trailing: isSelected
+                    ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                    : null,
+                onTap: () {
+                  settingsService.setDefaultStrings(count);
+                  if (settingsService.hapticFeedback) {
+                    HapticFeedback.lightImpact();
+                  }
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -167,6 +184,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return 'Light';
       case ThemeMode.dark:
         return 'Dark';
+    }
+  }
+
+  String _getInstrumentDisplayName() {
+    switch (settingsService.defaultInstrument) {
+      case 'guitar':
+        return 'Guitar';
+      case 'bass':
+        return 'Bass';
+      case 'custom':
+        return 'Custom (${settingsService.defaultStrings} strings)';
+      default:
+        return 'Guitar';
     }
   }
 
@@ -244,9 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile(
                   icon: Icons.music_note_outlined,
                   title: 'Default Instrument',
-                  subtitle: settingsService.defaultInstrument == 'guitar'
-                      ? 'Guitar'
-                      : 'Bass',
+                  subtitle: _getInstrumentDisplayName(),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _showInstrumentDialog,
                 ),
@@ -312,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SettingsTile(
                   icon: Icons.info_outline,
                   title: 'Version',
-                  subtitle: '1.0.0',
+                  subtitle: '1.0.1',
                   showDivider: false,
                 ),
               ],

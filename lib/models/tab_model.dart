@@ -450,7 +450,8 @@ class GuitarTab {
         songName = trimmed.substring(5).trim();
       } else if (trimmed.startsWith('Tuning:')) {
         tuning = trimmed.substring(7).trim();
-      } else if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      } else if ((trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+                 (trimmed.startsWith('(') && trimmed.endsWith(')'))) {
         // Save previous section if exists
         if (currentStringContents.isNotEmpty) {
           sections.add(_parseSection(

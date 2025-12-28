@@ -6,7 +6,7 @@
       "Bash(cmd.exe /c \"flutter analyze --no-fatal-infos --no-fatal-warnings\")",
       "Bash(flutter.bat analyze:*)",
       "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter analyze --no-fatal-infos --no-fatal-warnings\")",
-      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer:*)",
+      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\":*)",
       "Bash(C:UsersBendiflutterbinflutter analyze --no-fatal-infos --no-fatal-warnings C:UsersBendiDesktopTab MakerThe_Tab_Writer)",
       "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze --no-fatal-infos --no-fatal-warnings\":*)",
       "Bash(C:UsersBendiflutterbinflutter.bat analyze)",
@@ -40,7 +40,7 @@
       "Bash(/c/Users/Bendi/flutter/bin/dart run:*)",
       "Bash(/c/Users/Bendi/flutter/bin/flutter.bat run:*)",
       "Bash(cmd.exe /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter analyze\")",
-      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze:*)",
+      "Bash(cmd.exe /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat analyze\":*)",
       "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer''\")",
       "Bash(powershell -Command \"& ''C:\\Users\\Bendi\\flutter\\bin\\flutter.bat'' analyze ''C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer\\lib\\screens\\tabs_list\\tabs_list_screen.dart''\")",
       "Bash(\"C:/Users/Bendi/flutter/bin/flutter.bat\" analyze)",
@@ -51,7 +51,15 @@
       "Bash(C:UsersBendiflutterbinflutter analyze lib/screens/tab_viewer/tab_viewer_screen.dart lib/models/tab_model.dart)",
       "Bash(C:/Users/Bendi/flutter/bin/flutter.bat analyze:*)",
       "Bash(cmd /c \"cd /d C:\\Users\\Bendi\\Desktop\\Tab Maker\\The_Tab_Writer && C:\\Users\\Bendi\\flutter\\bin\\flutter pub get\")",
-      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat clean\")"
+      "Bash(cmd /c \"C:\\Users\\Bendi\\flutter\\bin\\flutter.bat clean\")",
+      "Bash(powershell:*)",
+      "Bash(python:*)",
+      "Bash(keytool:*)",
+      "Bash(where:*)",
+      "Bash(del \"C:\\\\Users\\\\Bendi\\\\Desktop\\\\Tab Maker\\\\The_Tab_Writer\\\\android\\\\upload-keystore.jks\")",
+      "Bash(\"C:\\\\Program Files\\\\Java\\\\jdk-18.0.1.1\\\\bin\\\\keytool\" -genkey -v -keystore \"C:\\\\Users\\\\Bendi\\\\Desktop\\\\Tab Maker\\\\The_Tab_Writer\\\\android\\\\release-keystore.jks\" -keyalg RSA -keysize 2048 -validity 10000 -alias upload -storepass \"6XdXpXousoGUZDz84NS4\" -keypass \"6XdXpXousoGUZDz84NS4\" -dname \"CN=GooseTabs, OU=Mobile, O=GooseTabs, L=Unknown, ST=Unknown, C=US\")",
+      "Bash(C:UsersBendiflutterbinflutter doctor -v)",
+      "Bash(\"C:\\\\Users\\\\Bendi\\\\flutter\\\\bin\\\\flutter\" doctor -v)"
     ]
   }
 }
