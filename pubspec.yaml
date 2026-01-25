@@ -2,7 +2,7 @@ name: goosetabs
 description: "GooseTabs: The Tab Writer - An application for writing guitar and bass tabs"
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.10.3
